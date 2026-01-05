@@ -105,7 +105,7 @@ export function AdminNav() {
                   <Menu className="h-5 w-5" />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="left" className="w-[280px] sm:w-[300px]">
+              <SheetContent side="left" className="w-[280px] sm:w-[300px] bg-background/95 backdrop-blur-[3px] supports-[backdrop-filter]:bg-background/85">
                 <SheetHeader>
                   <SheetTitle className="text-left">Меню</SheetTitle>
                 </SheetHeader>

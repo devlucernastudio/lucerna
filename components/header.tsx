@@ -137,7 +137,7 @@ export function Header() {
 
       {/* Mobile Side Menu */}
       <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-        <SheetContent side="left" className="w-[300px] sm:w-[400px]">
+        <SheetContent side="left" className="w-[300px] sm:w-[400px] bg-background/95 backdrop-blur-[3px] supports-[backdrop-filter]:bg-background/85">
           <SheetHeader>
             <SheetTitle>Меню</SheetTitle>
           </SheetHeader>

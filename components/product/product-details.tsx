@@ -360,7 +360,7 @@ export function ProductDetails({
           // For checkbox, get display values for all selected options
           const selectedOptions = value.map(optId => {
             const opt = characteristicOptions.find(o => o.id === optId)
-            return opt ? (opt.name_uk || opt.value) : optId
+            return opt ? ((locale === "uk" ? opt.name_uk : opt.name_en) || opt.value) : optId
           })
           characteristicsData[locale === "uk" ? charType.name_uk : charType.name_en] = selectedOptions.join(", ")
         } else {
@@ -383,7 +383,7 @@ export function ProductDetails({
       comment: comment.trim() || undefined,
     })
 
-    showToast.success("Товар додано до кошика")
+    showToast.success(t("product.productAddedToCart"))
   }
 
   const handleSelectChange = (charTypeId: string, value: string) => {
@@ -432,6 +432,24 @@ export function ProductDetails({
     }
   }
 
+  // Add to Cart Button Component (to avoid duplication)
+  const AddToCartButton = ({ isMobile = false }: { isMobile?: boolean }) => (
+    <>
+      <Button
+        onClick={handleAddToCart}
+        disabled={validationErrors.length > 0}
+        className="w-full h-12 text-base bg-[#D4834F] hover:bg-[#C17340] disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        {t("product.addToCart")}
+      </Button>
+      {validationErrors.length > 0 && (
+        <p className={`text-sm text-red-500 ${isMobile ? "mt-2" : ""}`}>
+          {t("product.fillRequiredFields")}: {validationErrors.join(", ")}
+        </p>
+      )}
+    </>
+  )
+
   // Get selected option display value
   const getSelectedOptionDisplay = (charTypeId: string, inputType: CharacteristicInputType): { text: string | null; colorHex?: string } | null => {
     if (inputType === "color_palette") {
@@ -467,11 +485,11 @@ export function ProductDetails({
         </h1>
         <div className="flex items-baseline gap-3">
           <p className="text-2xl font-semibold text-foreground">
-            {showFromPrice ? (locale === "uk" ? "від " : "from ") : ""}{currentPrice.toLocaleString(locale === "uk" ? "uk-UA" : "en-US")} ₴
+            {showFromPrice ? `${t("product.from")} ` : ""}{currentPrice.toLocaleString(locale === "uk" ? "uk-UA" : "en-US")} {t("common.uah")}
           </p>
           {product.compare_at_price && product.compare_at_price > currentPrice && (
             <p className="text-lg text-muted-foreground line-through">
-              {product.compare_at_price.toLocaleString(locale === "uk" ? "uk-UA" : "en-US")} ₴
+              {product.compare_at_price.toLocaleString(locale === "uk" ? "uk-UA" : "en-US")} {t("common.uah")}
             </p>
           )}
         </div>
@@ -560,7 +578,7 @@ export function ProductDetails({
                                 }
                                 className="rounded"
                               />
-                              <span>{opt.name_uk || opt.value}</span>
+                              <span>{(locale === "uk" ? opt.name_uk : opt.name_en) || opt.value}</span>
                             </label>
                           ))}
                         </div>
@@ -592,9 +610,9 @@ export function ProductDetails({
                                   }`}
                                   style={{ backgroundColor: opt.color_code || "#000000" }}
                                 />
-                                {opt.name_uk && (
+                                {((locale === "uk" ? opt.name_uk : opt.name_en) || opt.value) && (
                                   <span className="text-[10px] text-center text-muted-foreground max-w-[40px] truncate">
-                                    {opt.name_uk}
+                                    {(locale === "uk" ? opt.name_uk : opt.name_en) || opt.value}
                                   </span>
                                 )}
                               </label>
@@ -638,7 +656,7 @@ export function ProductDetails({
 
       {/* Quantity */}
       <div className="space-y-2">
-        <Label htmlFor="quantity">Кількість</Label>
+        <Label htmlFor="quantity">{t("product.quantity")}</Label>
         <div className="flex items-center gap-2">
           <Button
             type="button"
@@ -676,12 +694,12 @@ export function ProductDetails({
 
       {/* Comment (if allowed) */}
       <div className="space-y-2">
-        <Label htmlFor="comment">Коментар до товару (необов'язково)</Label>
+        <Label htmlFor="comment">{t("product.comment")}</Label>
         <Textarea
           id="comment"
           value={comment}
           onChange={(e) => setComment(e.target.value)}
-          placeholder="Додайте коментар до замовлення..."
+          placeholder={t("product.commentPlaceholder")}
           rows={3}
         />
       </div>
@@ -701,33 +719,11 @@ export function ProductDetails({
 
       {/* Add to Cart Button - fixed on mobile */}
       <div className="space-y-2 lg:space-y-2">
-        <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-background border-t border-border p-4 z-50 shadow-lg">
-          <Button
-            onClick={handleAddToCart}
-            disabled={validationErrors.length > 0}
-            className="w-full h-12 text-base bg-[#D4834F] hover:bg-[#C17340] disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Додати у кошик
-          </Button>
-          {validationErrors.length > 0 && (
-            <p className="text-sm text-red-500 mt-2">
-              {t("product.fillRequiredFields")}: {validationErrors.join(", ")}
-            </p>
-          )}
+        <div className="lg:hidden fixed bottom-0 mb-[0px] left-0 right-0 bg-background border-t border-border p-4 z-50 shadow-lg">
+          <AddToCartButton isMobile={true} />
         </div>
         <div className="hidden lg:block space-y-2">
-          <Button
-            onClick={handleAddToCart}
-            disabled={validationErrors.length > 0}
-            className="w-full h-12 text-base bg-[#D4834F] hover:bg-[#C17340] disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Додати у кошик
-          </Button>
-          {validationErrors.length > 0 && (
-            <p className="text-sm text-red-500">
-              {t("product.fillRequiredFields")}: {validationErrors.join(", ")}
-            </p>
-          )}
+          <AddToCartButton />
         </div>
       </div>
     </div>
