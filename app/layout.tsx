@@ -2,10 +2,12 @@ import type React from "react"
 import type { Metadata } from "next"
 import { Geist, Geist_Mono } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
+import { cookies } from "next/headers"
 import "./globals.css"
 import { CartProvider } from "@/lib/cart-context"
 import { I18nProvider } from "@/lib/i18n-context"
 import { HeaderWrapper } from "@/components/header-wrapper"
+import { Toaster } from "@/components/ui/toaster"
 
 const _geist = Geist({ subsets: ["latin"] })
 const _geistMono = Geist_Mono({ subsets: ["latin"] })
@@ -13,41 +15,37 @@ const _geistMono = Geist_Mono({ subsets: ["latin"] })
 export const metadata: Metadata = {
   title: "Lucerna Studio - Живі форми світла",
   description: "Унікальні світильники ручної роботи від Lucerna Studio",
-  generator: "v0.app",
+  generator: "Lucerna Studio",
   icons: {
     icon: [
-      {
-        url: "/icon-light-32x32.png",
-        media: "(prefers-color-scheme: light)",
-      },
-      {
-        url: "/icon-dark-32x32.png",
-        media: "(prefers-color-scheme: dark)",
-      },
-      {
-        url: "/icon.svg",
-        type: "image/svg+xml",
-      },
+      { url: "/favicon.ico" },
+      { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+      { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
     ],
-    apple: "/apple-icon.png",
+    apple: "/apple-touch-icon.png",
   },
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  const cookieStore = await cookies()
+  const locale = cookieStore.get("locale")?.value || "uk"
+  const validLocale = locale === "uk" || locale === "en" ? locale : "uk"
+  
   return (
-    <html lang="uk">
+    <html lang={validLocale}>
       <body className={`font-sans antialiased`}>
-        <I18nProvider initialLocale="uk">
+        <I18nProvider initialLocale={validLocale}>
           <CartProvider>
             <HeaderWrapper />
             {children}
           </CartProvider>
         </I18nProvider>
         <Analytics />
+        <Toaster />
       </body>
     </html>
   )

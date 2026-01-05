@@ -1,6 +1,5 @@
 import { redirect, notFound } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
-import { AdminNav } from "@/components/admin/admin-nav"
 import { BlogPostForm } from "@/components/admin/blog-post-form"
 
 export default async function EditBlogPostPage({ params }: { params: Promise<{ id: string }> }) {
@@ -30,12 +29,9 @@ export default async function EditBlogPostPage({ params }: { params: Promise<{ i
   }
 
   return (
-    <div className="min-h-screen bg-secondary">
-      <AdminNav currentPath="/admin/blog" />
-      <main className="container mx-auto p-6">
-        <h1 className="mb-8 text-3xl font-bold text-foreground">Редагувати статтю</h1>
-        <BlogPostForm post={post} />
-      </main>
-    </div>
+    <main className="container mx-auto p-6">
+      <h1 className="mb-8 text-3xl font-bold text-foreground">Редагувати статтю</h1>
+      <BlogPostForm post={post} />
+    </main>
   )
 }

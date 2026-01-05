@@ -1,6 +1,5 @@
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
-import { AdminNav } from "@/components/admin/admin-nav"
 import { BlogPostsTable } from "@/components/admin/blog-posts-table"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
@@ -28,9 +27,7 @@ export default async function AdminBlogPage() {
   const { data: posts } = await supabase.from("blog_posts").select("*").order("created_at", { ascending: false })
 
   return (
-    <div className="min-h-screen bg-secondary">
-      <AdminNav currentPath="/admin/blog" />
-      <main className="container mx-auto p-6">
+    <main className="container mx-auto p-6">
         <div className="mb-6 flex items-center justify-between">
           <h1 className="text-3xl font-bold text-foreground">Управління блогом</h1>
           <Link href="/admin/blog/new">
@@ -42,7 +39,6 @@ export default async function AdminBlogPage() {
         </div>
 
         <BlogPostsTable posts={posts || []} />
-      </main>
-    </div>
+    </main>
   )
 }

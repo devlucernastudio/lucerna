@@ -130,12 +130,6 @@ export default function AdminLoginPage() {
                 <Button type="submit" className="w-full bg-[#D4834F] hover:bg-[#C17340]" disabled={isLoading}>
                   {isLoading ? "Вхід..." : "Увійти"}
                 </Button>
-                <p className="text-center text-sm text-muted-foreground">
-                  Немає аккаунту?{" "}
-                  <a href="/admin/signup" className="text-[#D4834F] hover:underline">
-                    Зареєструватись
-                  </a>
-                </p>
               </div>
             </form>
           </CardContent>

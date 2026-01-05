@@ -1,6 +1,5 @@
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
-import { AdminNav } from "@/components/admin/admin-nav"
 import { BlogPostForm } from "@/components/admin/blog-post-form"
 
 export default async function NewBlogPostPage() {
@@ -22,12 +21,9 @@ export default async function NewBlogPostPage() {
   }
 
   return (
-    <div className="min-h-screen bg-secondary">
-      <AdminNav currentPath="/admin/blog" />
-      <main className="container mx-auto p-6">
-        <h1 className="mb-8 text-3xl font-bold text-foreground">Нова стаття</h1>
-        <BlogPostForm />
-      </main>
-    </div>
+    <main className="container mx-auto p-6">
+      <h1 className="mb-8 text-3xl font-bold text-foreground">Нова стаття</h1>
+      <BlogPostForm />
+    </main>
   )
 }

@@ -13,11 +13,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 
 interface ContentBlock {
   id: string
-  key: string
-  title_uk: string
-  title_en: string
-  content_uk: string
-  content_en: string
+  type: string
+  title_uk: string | null
+  title_en: string | null
+  content_uk: string | null
+  content_en: string | null
 }
 
 export function SettingsForm({ contentBlocks }: { contentBlocks: ContentBlock[] }) {
@@ -48,7 +48,17 @@ export function SettingsForm({ contentBlocks }: { contentBlocks: ContentBlock[] 
         .eq("id", block.id)
 
       if (error) {
-        alert(`Помилка при оновленні блоку ${block.key}`)
+        const blockTypeNames: Record<string, string> = {
+          hero: "Головний банер",
+          features: "Особливості",
+          about: "Про Lucerna Studio",
+          about_page: "Сторінка 'Про нас'",
+          gallery: "Галерея",
+          testimonials: "Відгуки",
+          cta: "Призив до дії"
+        }
+        const blockName = blockTypeNames[block.type] || block.type
+        alert(`Помилка при оновленні блоку ${blockName}`)
         setLoading(false)
         return
       }
@@ -59,13 +69,36 @@ export function SettingsForm({ contentBlocks }: { contentBlocks: ContentBlock[] 
     setLoading(false)
   }
 
+  const blockTypeNames: Record<string, string> = {
+    hero: "Головний банер",
+    features: "Особливості",
+    about: "Про Lucerna Studio",
+    about_page: "Сторінка 'Про нас'",
+    gallery: "Галерея",
+    testimonials: "Відгуки",
+    cta: "Призив до дії"
+  }
+
+  const blockDescriptions: Record<string, string> = {
+    hero: "Великий банер з заголовком та текстом на початку головної сторінки",
+    features: "Блок з особливостями/перевагами товарів або сервісу",
+    about: "Секція з описом про Lucerna Studio та текст, що відображається на головній сторінці",
+    about_page: "Контент для сторінки 'Про нас' - заголовок та текст з HTML форматуванням",
+    gallery: "Галерея зображень товарів",
+    testimonials: "Блок з відгуками клієнтів",
+    cta: "Призив до дії з кнопкою замовлення"
+  }
+
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {blocks.map((block) => (
+      {blocks.map((block) => {
+        const blockName = blockTypeNames[block.type] || block.type
+        const blockDescription = blockDescriptions[block.type] || "Редагування контенту для цього блоку на головній сторінці"
+        return (
         <Card key={block.id}>
           <CardHeader>
-            <CardTitle>Блок: {block.key}</CardTitle>
-            <CardDescription>Редагування контенту для цього блоку</CardDescription>
+            <CardTitle>{blockName}</CardTitle>
+            <CardDescription>{blockDescription}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid gap-4 md:grid-cols-2">
@@ -73,7 +106,7 @@ export function SettingsForm({ contentBlocks }: { contentBlocks: ContentBlock[] 
                 <Label htmlFor={`${block.id}-title_uk`}>Заголовок (UA)</Label>
                 <Input
                   id={`${block.id}-title_uk`}
-                  value={block.title_uk}
+                  value={block.title_uk || ""}
                   onChange={(e) => handleUpdateBlock(block.id, "title_uk", e.target.value)}
                 />
               </div>
@@ -92,9 +125,10 @@ export function SettingsForm({ contentBlocks }: { contentBlocks: ContentBlock[] 
                 <Label htmlFor={`${block.id}-content_uk`}>Контент (UA)</Label>
                 <Textarea
                   id={`${block.id}-content_uk`}
-                  value={block.content_uk}
+                  value={block.content_uk || ""}
                   onChange={(e) => handleUpdateBlock(block.id, "content_uk", e.target.value)}
-                  rows={4}
+                  rows={block.type === "about" || block.type === "about_page" ? 8 : 4}
+                  placeholder={block.type === "about_page" ? "Використовуйте HTML теги для форматування (h2, p, strong, em, ul, ol, li)" : ""}
                 />
               </div>
               <div>
@@ -109,7 +143,8 @@ export function SettingsForm({ contentBlocks }: { contentBlocks: ContentBlock[] 
             </div>
           </CardContent>
         </Card>
-      ))}
+        )
+      })}
 
       <Button type="submit" disabled={loading} className="bg-[#D4834F] hover:bg-[#C17340]">
         {loading ? "Збереження..." : "Зберегти налаштування"}

@@ -1,6 +1,5 @@
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
-import { AdminNav } from "@/components/admin/admin-nav"
 import { DashboardStats } from "@/components/admin/dashboard-stats"
 import { RecentOrders } from "@/components/admin/recent-orders"
 
@@ -39,9 +38,7 @@ export default async function AdminPage() {
     .limit(5)
 
   return (
-    <div className="min-h-screen bg-secondary">
-      <AdminNav currentPath="/admin" />
-      <main className="container mx-auto p-6">
+    <main className="container mx-auto p-6">
         <h1 className="mb-8 text-3xl font-bold text-foreground">Панель управління</h1>
 
         <DashboardStats
@@ -56,7 +53,6 @@ export default async function AdminPage() {
           <h2 className="mb-4 text-xl font-semibold text-foreground">Останні замовлення</h2>
           <RecentOrders orders={recentOrders || []} />
         </div>
-      </main>
-    </div>
+    </main>
   )
 }

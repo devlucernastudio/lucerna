@@ -91,7 +91,7 @@ export function BlogPostsTable({ posts }: { posts: BlogPost[] }) {
               </TableCell>
               <TableCell className="text-right">
                 <div className="flex justify-end gap-2">
-                  <Link href={`/blog/${post.slug}`} target="_blank">
+                  <Link href={`/blog/${post.slug || post.id}`} target="_blank">
                     <Button variant="ghost" size="sm">
                       <Eye className="h-4 w-4" />
                     </Button>

@@ -1,7 +1,9 @@
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
-import { AdminNav } from "@/components/admin/admin-nav"
 import { SettingsForm } from "@/components/admin/settings-form"
+import { CategoriesManager } from "@/components/admin/categories-manager"
+import { CharacteristicsManager } from "@/components/admin/characteristics-manager"
+import { ContactSettingsManager } from "@/components/admin/contact-settings-manager"
 
 export default async function AdminSettingsPage() {
   const supabase = await createClient()
@@ -25,12 +27,16 @@ export default async function AdminSettingsPage() {
   const { data: contentBlocks } = await supabase.from("content_blocks").select("*").order("created_at")
 
   return (
-    <div className="min-h-screen bg-secondary">
-      <AdminNav currentPath="/admin/settings" />
-      <main className="container mx-auto p-6">
-        <h1 className="mb-8 text-3xl font-bold text-foreground">Налаштування сайту</h1>
-        <SettingsForm contentBlocks={contentBlocks || []} />
-      </main>
-    </div>
+    <main className="container mx-auto p-4 md:p-6 space-y-8">
+      <h1 className="text-2xl md:text-3xl font-bold text-foreground">Налаштування сайту</h1>
+      
+      <ContactSettingsManager />
+      
+      <CategoriesManager />
+      
+      <CharacteristicsManager />
+      
+      <SettingsForm contentBlocks={contentBlocks || []} />
+    </main>
   )
 }

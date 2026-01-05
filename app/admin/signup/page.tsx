@@ -18,7 +18,14 @@ export default function AdminSignupPage() {
   const [success, setSuccess] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [envError, setEnvError] = useState<string | null>(null)
+  const [isRegistrationClosed, setIsRegistrationClosed] = useState(false)
+  const [isChecking, setIsChecking] = useState(true)
   const router = useRouter()
+
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+  )
 
   useEffect(() => {
     if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
@@ -27,13 +34,37 @@ export default function AdminSignupPage() {
         url: process.env.NEXT_PUBLIC_SUPABASE_URL,
         key: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? "present" : "missing",
       })
+      setIsChecking(false)
+      return
     }
-  }, [])
 
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-  )
+    // Check if admins already exist
+    const checkAdmins = async () => {
+      try {
+        const { count, error } = await supabase
+          .from("admins")
+          .select("*", { count: "exact", head: true })
+
+        if (error) {
+          console.error("Error checking admins:", error)
+          // If table doesn't exist yet, allow registration
+          setIsRegistrationClosed(false)
+        } else if (count && count > 0) {
+          setIsRegistrationClosed(true)
+        } else {
+          setIsRegistrationClosed(false)
+        }
+      } catch (err) {
+        console.error("Error checking admins:", err)
+        // On error, allow registration (might be first time setup)
+        setIsRegistrationClosed(false)
+      } finally {
+        setIsChecking(false)
+      }
+    }
+
+    checkAdmins()
+  }, [])
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -90,6 +121,18 @@ export default function AdminSignupPage() {
     }
   }
 
+  if (isChecking) {
+    return (
+      <div className="flex min-h-screen w-full items-center justify-center bg-[#F5F3EE] p-6">
+        <Card className="w-full max-w-sm">
+          <CardHeader>
+            <CardTitle className="text-2xl">Завантаження...</CardTitle>
+          </CardHeader>
+        </Card>
+      </div>
+    )
+  }
+
   if (envError) {
     return (
       <div className="flex min-h-screen w-full items-center justify-center bg-[#F5F3EE] p-6">
@@ -102,6 +145,29 @@ export default function AdminSignupPage() {
             <p className="text-sm">Please check your environment variables in the project settings.</p>
           </CardContent>
         </Card>
+      </div>
+    )
+  }
+
+  if (isRegistrationClosed) {
+    return (
+      <div className="flex min-h-screen w-full items-center justify-center bg-[#F5F3EE] p-6">
+        <div className="w-full max-w-sm">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-2xl">Реєстрація закрита</CardTitle>
+              <CardDescription>Реєстрація адміністраторів недоступна</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground mb-4">
+                Адміністратор вже зареєстрований в системі. Якщо ви маєте права доступу, увійдіть в систему.
+              </p>
+              <Button className="w-full bg-[#D4834F] hover:bg-[#C17340]" asChild>
+                <a href="/admin/login">Перейти до входу</a>
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     )
   }

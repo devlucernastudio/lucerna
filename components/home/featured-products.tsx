@@ -1,12 +1,10 @@
 "use client"
 
 import Link from "next/link"
-import Image from "next/image"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import { useI18n } from "@/lib/i18n-context"
 import { getTranslation } from "@/lib/translations"
-import { useCart } from "@/lib/cart-context"
+import { ProductCard } from "@/components/catalog/product-card"
 
 interface Product {
   id: string
@@ -15,21 +13,79 @@ interface Product {
   slug: string
   price: number
   images: string[]
+  description_uk?: string | null
+  description_en?: string | null
 }
 
-export function FeaturedProducts({ products }: { products: Product[] }) {
+interface ProductCharacteristic {
+  id: string
+  product_id: string
+  characteristic_type_id: string
+  required: boolean | null
+  affects_price: boolean | null
+}
+
+interface CharacteristicType {
+  id: string
+  name_uk: string
+  name_en: string
+  input_type: string
+  required: boolean
+  affects_price: boolean
+}
+
+interface CharacteristicOption {
+  id: string
+  characteristic_type_id: string
+  name_uk: string | null
+  name_en: string | null
+  value: string
+  color_code: string | null
+}
+
+interface PriceCombination {
+  id: string
+  product_id: string
+  combination: Record<string, string>
+  price: number
+  is_available: boolean
+}
+
+interface FeaturedProductsProps {
+  products: Product[]
+  productCharacteristics?: ProductCharacteristic[]
+  characteristicTypes?: CharacteristicType[]
+  characteristicOptions?: CharacteristicOption[]
+  priceCombinations?: PriceCombination[]
+}
+
+export function FeaturedProducts({ 
+  products,
+  productCharacteristics = [],
+  characteristicTypes = [],
+  characteristicOptions = [],
+  priceCombinations = [],
+}: FeaturedProductsProps) {
   const { locale } = useI18n()
-  const { addToCart } = useCart()
   const t = (key: string) => getTranslation(locale, key)
 
-  const handleAddToCart = (product: Product) => {
-    addToCart({
-      id: product.id,
-      name: locale === "uk" ? product.name_uk : product.name_en,
-      price: product.price,
-      image: product.images[0] || "/placeholder.svg",
-    })
-  }
+  // Group characteristics and price combinations by product_id
+  const characteristicsByProduct: Record<string, ProductCharacteristic[]> = {}
+  const priceCombinationsByProduct: Record<string, PriceCombination[]> = {}
+
+  productCharacteristics.forEach((pc) => {
+    if (!characteristicsByProduct[pc.product_id]) {
+      characteristicsByProduct[pc.product_id] = []
+    }
+    characteristicsByProduct[pc.product_id].push(pc)
+  })
+
+  priceCombinations.forEach((pc) => {
+    if (!priceCombinationsByProduct[pc.product_id]) {
+      priceCombinationsByProduct[pc.product_id] = []
+    }
+    priceCombinationsByProduct[pc.product_id].push(pc)
+  })
 
   return (
     <section className="container mx-auto px-4 py-16">
@@ -45,38 +101,30 @@ export function FeaturedProducts({ products }: { products: Product[] }) {
       </div>
 
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {products.slice(0, 6).map((product) => (
-          <Card
-            key={product.id}
-            className="group overflow-hidden border-border/50 transition-all hover:shadow-lg hover:border-[#D4834F]/30"
-          >
-            <Link href={`/product/${product.slug}`}>
-              <div className="relative aspect-square overflow-hidden bg-muted">
-                <Image
-                  src={product.images[0] || "/placeholder.svg"}
-                  alt={locale === "uk" ? product.name_uk : product.name_en}
-                  fill
-                  className="object-cover transition-transform group-hover:scale-105"
-                />
-              </div>
-            </Link>
-            <CardContent className="p-4">
-              <Link href={`/product/${product.slug}`}>
-                <h3 className="mb-2 text-base font-medium text-foreground hover:text-[#D4834F] transition-colors line-clamp-2">
-                  {locale === "uk" ? product.name_uk : product.name_en}
-                </h3>
-              </Link>
-              <p className="text-lg font-semibold text-foreground">
-                {product.price.toLocaleString("uk-UA")} {t("common.uah")}
-              </p>
-            </CardContent>
-            <CardFooter className="p-4 pt-0">
-              <Button className="w-full bg-[#D4834F] hover:bg-[#C17340]" onClick={() => handleAddToCart(product)}>
-                {t("product.addToCart")}
-              </Button>
-            </CardFooter>
-          </Card>
-        ))}
+        {products.slice(0, 6).map((product) => {
+          const productChars = characteristicsByProduct[product.id] || []
+          const productPriceCombinations = priceCombinationsByProduct[product.id] || []
+
+          return (
+            <ProductCard
+              key={product.id}
+              product={{
+                id: product.id,
+                name_uk: product.name_uk,
+                name_en: product.name_en,
+                slug: product.slug,
+                price: product.price,
+                images: product.images,
+                description_uk: product.description_uk,
+                description_en: product.description_en,
+              }}
+              productCharacteristics={productChars}
+              characteristicTypes={characteristicTypes}
+              characteristicOptions={characteristicOptions}
+              priceCombinations={productPriceCombinations}
+            />
+          )
+        })}
       </div>
     </section>
   )

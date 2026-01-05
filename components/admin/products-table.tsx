@@ -18,10 +18,10 @@ interface Product {
   is_featured: boolean
   is_active: boolean
   images: string[]
-  categories?: {
+  productCategories?: Array<{
     name_uk: string
     name_en: string
-  }
+  }>
 }
 
 interface Category {
@@ -32,6 +32,15 @@ interface Category {
 
 export function ProductsTable({ products, categories }: { products: Product[]; categories: Category[] }) {
   const router = useRouter()
+
+  const handleRowClick = (productId: string, e: React.MouseEvent) => {
+    // Don't navigate if clicking on buttons or links
+    const target = e.target as HTMLElement
+    if (target.closest('button') || target.closest('a')) {
+      return
+    }
+    router.push(`/admin/products/${productId}/edit`)
+  }
 
   const handleDelete = async (id: string) => {
     if (!confirm("Ви впевнені, що хочете видалити цей товар?")) return
@@ -62,7 +71,94 @@ export function ProductsTable({ products, categories }: { products: Product[]; c
   return (
     <Card>
       <CardContent className="p-0">
-        <div className="overflow-x-auto">
+        {/* Mobile/Tablet view */}
+        <div className="block lg:hidden">
+          <div className="divide-y divide-border">
+            {products.map((product) => (
+              <div 
+                key={product.id} 
+                className="p-4 space-y-3 cursor-pointer hover:bg-muted/50 transition-colors"
+                onClick={(e) => handleRowClick(product.id, e)}
+              >
+                <div className="flex items-start gap-4">
+                  <div className="relative h-20 w-20 flex-shrink-0 overflow-hidden rounded">
+                    <Image
+                      src={product.images[0] || "/placeholder.svg"}
+                      alt={product.name_uk}
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-foreground truncate">{product.name_uk}</p>
+                    <p className="text-sm text-muted-foreground truncate">{product.name_en}</p>
+                    <p className="text-sm font-medium text-foreground mt-1">
+                      {product.price.toLocaleString("uk-UA")} грн
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <div className="space-y-1">
+                    <div>
+                      <span className="text-muted-foreground">Категорії: </span>
+                      <span>
+                        {product.productCategories && product.productCategories.length > 0
+                          ? product.productCategories.map(c => c.name_uk).join(", ")
+                          : "—"}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Наявність: </span>
+                      <span>{product.stock > 0 ? `${product.stock} шт.` : "Немає"}</span>
+                    </div>
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      <span className={`inline-block px-2 py-0.5 rounded text-xs ${
+                        product.is_active 
+                          ? "bg-green-100 text-green-800" 
+                          : "bg-gray-100 text-gray-800"
+                      }`}>
+                        {product.is_active ? "Активний" : "Неактивний"}
+                      </span>
+                      {product.is_featured && (
+                        <span className="inline-block px-2 py-0.5 rounded text-xs bg-[#D4834F] text-white">
+                          Популярний
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                <div className="flex gap-2 pt-2" onClick={(e) => e.stopPropagation()}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1"
+                    asChild
+                  >
+                    <Link href={`/admin/products/${product.id}/edit`}>
+                      <Pencil className="h-4 w-4 mr-2" />
+                      Редагувати
+                    </Link>
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    className="flex-1"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleDelete(product.id)
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Видалити
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Desktop view */}
+        <div className="hidden lg:block overflow-x-auto">
           <table className="w-full">
             <thead className="border-b border-border bg-muted/50">
               <tr>
@@ -77,7 +173,11 @@ export function ProductsTable({ products, categories }: { products: Product[]; c
             </thead>
             <tbody>
               {products.map((product) => (
-                <tr key={product.id} className="border-b border-border last:border-0">
+                <tr 
+                  key={product.id} 
+                  className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors cursor-pointer"
+                  onClick={(e) => handleRowClick(product.id, e)}
+                >
                   <td className="p-4">
                     <div className="relative h-12 w-12 overflow-hidden rounded">
                       <Image
@@ -93,35 +193,50 @@ export function ProductsTable({ products, categories }: { products: Product[]; c
                     <p className="text-sm text-muted-foreground">{product.name_en}</p>
                   </td>
                   <td className="p-4">
-                    <span className="text-sm text-muted-foreground">{product.categories?.name_uk || "—"}</span>
+                    <span className="text-sm text-muted-foreground">
+                      {product.productCategories && product.productCategories.length > 0
+                        ? product.productCategories.map(c => c.name_uk).join(", ")
+                        : "—"}
+                    </span>
                   </td>
                   <td className="p-4">
                     <span className="font-medium text-foreground">{product.price.toLocaleString("uk-UA")} грн</span>
                   </td>
                   <td className="p-4">
-                    <span className={`text-sm ${product.stock > 0 ? "text-green-600" : "text-red-600"}`}>
-                      {product.stock} шт
-                    </span>
+                    <span className="text-sm text-foreground">{product.stock > 0 ? `${product.stock} шт.` : "Немає"}</span>
                   </td>
                   <td className="p-4">
-                    <div className="flex gap-2">
-                      {product.is_active ? (
-                        <Badge className="bg-green-500 text-white">Активний</Badge>
-                      ) : (
-                        <Badge className="bg-gray-500 text-white">Неактивний</Badge>
+                    <div className="flex items-center gap-2">
+                      <span className={`inline-block px-2 py-1 rounded text-xs ${
+                        product.is_active 
+                          ? "bg-green-100 text-green-800" 
+                          : "bg-gray-100 text-gray-800"
+                      }`}>
+                        {product.is_active ? "Активний" : "Неактивний"}
+                      </span>
+                      {product.is_featured && (
+                        <span className="inline-block px-2 py-1 rounded text-xs bg-[#D4834F] text-white">
+                          Популярний
+                        </span>
                       )}
-                      {product.is_featured && <Badge className="bg-[#D4834F] text-white">Популярний</Badge>}
                     </div>
                   </td>
                   <td className="p-4">
-                    <div className="flex justify-end gap-2">
-                      <Button variant="ghost" size="sm" asChild>
+                    <div className="flex items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
+                      <Button variant="outline" size="sm" asChild>
                         <Link href={`/admin/products/${product.id}/edit`}>
                           <Pencil className="h-4 w-4" />
                         </Link>
                       </Button>
-                      <Button variant="ghost" size="sm" onClick={() => handleDelete(product.id)}>
-                        <Trash2 className="h-4 w-4 text-red-500" />
+                      <Button 
+                        variant="destructive" 
+                        size="sm" 
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleDelete(product.id)
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
                   </td>

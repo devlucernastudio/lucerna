@@ -36,7 +36,7 @@ export function BlogPostForm({ post }: { post?: BlogPost }) {
     excerpt_en: post?.excerpt_en || "",
     content_uk: post?.content_uk || "",
     content_en: post?.content_en || "",
-    image_url: post?.image_url || "",
+    cover_image: post?.cover_image || "",
     is_published: post?.is_published || false,
   })
 
@@ -181,12 +181,12 @@ export function BlogPostForm({ post }: { post?: BlogPost }) {
           </div>
 
           <div>
-            <Label htmlFor="image_url">URL зображення</Label>
+            <Label htmlFor="cover_image">URL зображення</Label>
             <Input
-              id="image_url"
+              id="cover_image"
               type="url"
-              value={formData.image_url}
-              onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
+              value={formData.cover_image}
+              onChange={(e) => setFormData({ ...formData, cover_image: e.target.value })}
             />
           </div>
 

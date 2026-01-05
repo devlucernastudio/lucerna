@@ -1,9 +1,12 @@
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
-import { AdminNav } from "@/components/admin/admin-nav"
 import { OrdersTable } from "@/components/admin/orders-table"
 
-export default async function AdminOrdersPage() {
+export default async function AdminOrdersPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ status?: string }>
+}) {
   const supabase = await createClient()
 
   const {
@@ -20,15 +23,40 @@ export default async function AdminOrdersPage() {
     redirect("/admin/login")
   }
 
-  const { data: orders } = await supabase.from("orders").select("*").order("created_at", { ascending: false })
+  const params = await searchParams
+  const statusFilter = params.status
+
+  // Fetch orders with optional status filter
+  let ordersQuery = supabase.from("orders").select("*")
+  
+  if (statusFilter && statusFilter !== "all") {
+    ordersQuery = ordersQuery.eq("status", statusFilter)
+  }
+
+  const { data: orders } = await ordersQuery.order("created_at", { ascending: false })
+
+  // Fetch order items for all orders
+  const orderIds = orders?.map((o) => o.id) || []
+  const { data: orderItems } = orderIds.length > 0
+    ? await supabase
+        .from("order_items")
+        .select("*")
+        .in("order_id", orderIds)
+    : { data: [] }
+
+  // Group order items by order_id
+  const itemsByOrder: Record<string, typeof orderItems> = {}
+  orderItems?.forEach((item: any) => {
+    if (!itemsByOrder[item.order_id]) {
+      itemsByOrder[item.order_id] = []
+    }
+    itemsByOrder[item.order_id].push(item)
+  })
 
   return (
-    <div className="min-h-screen bg-secondary">
-      <AdminNav currentPath="/admin/orders" />
-      <main className="container mx-auto p-6">
-        <h1 className="mb-8 text-3xl font-bold text-foreground">Управління замовленнями</h1>
-        <OrdersTable orders={orders || []} />
-      </main>
-    </div>
+    <main className="container mx-auto p-4 md:p-6">
+      <h1 className="mb-6 md:mb-8 text-2xl md:text-3xl font-bold text-foreground">Управління замовленнями</h1>
+      <OrdersTable orders={orders || []} orderItemsByOrder={itemsByOrder} />
+    </main>
   )
 }

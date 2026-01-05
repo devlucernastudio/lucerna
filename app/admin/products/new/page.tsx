@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
-import { AdminNav } from "@/components/admin/admin-nav"
-import { ProductForm } from "@/components/admin/product-form"
+import { ProductFormNew } from "@/components/admin/product-form-new"
 
 export default async function NewProductPage() {
   const supabase = await createClient()
@@ -22,13 +21,29 @@ export default async function NewProductPage() {
 
   const { data: categories } = await supabase.from("categories").select("*").order("name_uk")
 
+  // Get all characteristic types
+  const { data: characteristicTypes } = await supabase
+    .from("characteristic_types")
+    .select("*")
+    .order("position", { ascending: true })
+
+  // Get all characteristic options
+  const characteristicTypeIds = characteristicTypes?.map(ct => ct.id) || []
+  const { data: characteristicOptions } = characteristicTypeIds.length > 0
+    ? await supabase
+        .from("characteristic_options")
+        .select("*")
+        .in("characteristic_type_id", characteristicTypeIds)
+        .order("position", { ascending: true })
+    : { data: null }
+
   return (
-    <div className="min-h-screen bg-secondary">
-      <AdminNav currentPath="/admin/products" />
-      <main className="container mx-auto max-w-4xl p-6">
-        <h1 className="mb-8 text-3xl font-bold text-foreground">Новий товар</h1>
-        <ProductForm categories={categories || []} />
-      </main>
-    </div>
+    <main className="container mx-auto max-w-4xl p-6">
+      <ProductFormNew 
+        categories={categories || []} 
+        characteristicTypes={characteristicTypes || []}
+        characteristicOptions={characteristicOptions || []}
+      />
+    </main>
   )
 }
