@@ -132,9 +132,9 @@ ${itemsWithChars}
 
       if (!resendResponse.ok) {
         const errorData = await resendResponse.json()
-        console.error("Resend API error:", errorData)
+        console.error("API error:", errorData)
         return NextResponse.json(
-          { success: false, error: "Failed to send email via Resend", details: errorData },
+          { success: false, error: "Failed to send email", details: errorData },
           { status: 500 }
         )
       }
@@ -144,7 +144,7 @@ ${itemsWithChars}
 
       return NextResponse.json({ success: true, message: "Notification sent", result })
     } catch (resendError) {
-      console.error("Error sending email via Resend:", resendError)
+      console.error("Error sending email:", resendError)
       return NextResponse.json(
         { success: false, error: "Failed to send email", details: resendError },
         { status: 500 }

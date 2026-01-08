@@ -76,7 +76,7 @@ export function Footer() {
       {/* Main footer content */}
       <div className="py-12">
         <div className="container mx-auto px-4">
-          <div className="grid gap-8 md:grid-cols-3">
+          <div className="grid gap-8 md:grid-cols-4">
             <div>
               <h3 className="mb-2 text-lg font-semibold text-foreground">Lucerna Studio</h3>
               <p className="text-sm mb-4 text-muted-foreground">{t("footer.handmade")}</p>
@@ -124,6 +124,33 @@ export function Footer() {
                 <li>
                   <LocaleLink href="/contacts" className="text-muted-foreground hover:text-[#D4834F]">
                     {t("nav.contacts")}
+                  </LocaleLink>
+                </li>
+              </ul>
+            </div>
+            <div>
+              <h3 className="mb-4 text-lg font-semibold text-foreground">
+                {locale === "uk" ? "Юридична інформація" : "Legal Information"}
+              </h3>
+              <ul className="space-y-2 text-sm">
+                <li>
+                  <LocaleLink href="/privacy" className="text-muted-foreground hover:text-[#D4834F]">
+                    {locale === "uk" ? "Політика конфіденційності" : "Privacy Policy"}
+                  </LocaleLink>
+                </li>
+                <li>
+                  <LocaleLink href="/terms" className="text-muted-foreground hover:text-[#D4834F]">
+                    {locale === "uk" ? "Публічна оферта" : "Terms of Service"}
+                  </LocaleLink>
+                </li>
+                <li>
+                  <LocaleLink href="/payment-delivery" className="text-muted-foreground hover:text-[#D4834F]">
+                    {locale === "uk" ? "Оплата і доставка" : "Payment & Delivery"}
+                  </LocaleLink>
+                </li>
+                <li>
+                  <LocaleLink href="/returns" className="text-muted-foreground hover:text-[#D4834F]">
+                    {locale === "uk" ? "Повернення товару" : "Returns"}
                   </LocaleLink>
                 </li>
               </ul>

@@ -5,8 +5,8 @@ import { BlogPostContent } from "@/components/blog/blog-post-content"
 
 export const revalidate = 0 // Disable caching to always show fresh data
 
-export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = await params
+export async function generateMetadata({ params }: { params: Promise<{ locale: string; slug: string }> }) {
+  const { locale, slug } = await params
   const supabase = await createClient()
   
   const { data: post } = await supabase
@@ -18,18 +18,55 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
   if (!post) {
     return {
-      title: "Стаття не знайдена - Lucerna Studio",
+      title: locale === "uk" ? "Стаття не знайдена - Lucerna Studio" : "Article not found - Lucerna Studio",
     }
   }
   
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://lucerna-studio.com"
+  const url = `${baseUrl}/${locale}/blog/${slug}`
+  const title = `${post.title_uk || post.title_en} - Lucerna Studio Blog`
+  const description = post.excerpt_uk || post.excerpt_en || ""
+  const image = post.cover_image ? `${baseUrl}${post.cover_image}` : `${baseUrl}/og-image.jpg`
+  
   return {
-    title: `${post.title_uk || post.title_en} - Lucerna Studio Blog`,
-    description: post.excerpt_uk || post.excerpt_en || "",
+    title,
+    description,
+    alternates: {
+      canonical: url,
+      languages: {
+        'uk-UA': `${baseUrl}/uk/blog/${slug}`,
+        'en-US': `${baseUrl}/en/blog/${slug}`,
+      },
+    },
+    openGraph: {
+      title,
+      description,
+      url,
+      siteName: "Lucerna Studio",
+      locale: locale === "uk" ? "uk_UA" : "en_US",
+      type: "article",
+      publishedTime: post.created_at,
+      modifiedTime: post.updated_at,
+      images: [
+        {
+          url: image,
+          width: 1200,
+          height: 630,
+          alt: title,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [image],
+    },
   }
 }
 
-export default async function BlogPostPage({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = await params
+export default async function BlogPostPage({ params }: { params: Promise<{ locale: string; slug: string }> }) {
+  const { locale, slug } = await params
   const supabase = await createClient()
 
   // Decode slug in case it's URL encoded

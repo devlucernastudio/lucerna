@@ -28,10 +28,19 @@ export function Header() {
   const t = (key: string) => getTranslation(locale, key)
 
   const isActive = (path: string) => {
-    if (path === "/") {
-      return pathname === "/"
+    // Remove locale prefix from pathname for comparison
+    let pathnameWithoutLocale = pathname
+    // Remove locale prefix like /uk/ or /en/
+    if (pathnameWithoutLocale.match(/^\/[a-z]{2}\//)) {
+      pathnameWithoutLocale = pathnameWithoutLocale.replace(/^\/[a-z]{2}/, "")
+    } else if (pathnameWithoutLocale.match(/^\/[a-z]{2}$/)) {
+      pathnameWithoutLocale = "/"
     }
-    return pathname.startsWith(path)
+    
+    if (path === "/") {
+      return pathnameWithoutLocale === "/" || pathnameWithoutLocale === ""
+    }
+    return pathnameWithoutLocale === path || pathnameWithoutLocale.startsWith(path + "/")
   }
 
   return (

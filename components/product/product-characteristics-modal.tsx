@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useMemo, useEffect } from "react"
+import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
@@ -10,6 +11,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog"
 import { useCart } from "@/lib/cart-context"
@@ -52,6 +54,17 @@ interface PriceCombination {
   is_available: boolean
 }
 
+interface AdditionalInfoBlock {
+  id: string
+  title_uk: string | null
+  title_en: string | null
+  content_uk: string | null
+  content_en: string | null
+  settings?: {
+    enabled?: boolean
+  }
+}
+
 interface ProductCharacteristicsModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -67,6 +80,7 @@ interface ProductCharacteristicsModalProps {
   characteristicTypes: CharacteristicType[]
   characteristicOptions: CharacteristicOption[]
   priceCombinations: PriceCombination[]
+  additionalInfoBlock?: AdditionalInfoBlock | null
 }
 
 export function ProductCharacteristicsModal({
@@ -77,16 +91,46 @@ export function ProductCharacteristicsModal({
   characteristicTypes,
   characteristicOptions,
   priceCombinations,
+  additionalInfoBlock,
 }: ProductCharacteristicsModalProps) {
   const { addToCart } = useCart()
   const { locale } = useI18n()
   const t = (key: string) => getTranslation(locale, key)
   const [selectedValues, setSelectedValues] = useState<Record<string, string | string[]>>({})
   const [textValues, setTextValues] = useState<Record<string, string>>({})
-  const [colorPaletteValues, setColorPaletteValues] = useState<Record<string, { id: string; name: string; hex: string }>>({})
+  const [colorPaletteValues, setColorPaletteValues] = useState<Record<string, { id: string; name: string; hex: string; lch?: string; l?: number; c?: number; h?: number }>>({})
   const [paletteModalOpen, setPaletteModalOpen] = useState<Record<string, boolean>>({})
   const [quantity, setQuantity] = useState(1)
   const [comment, setComment] = useState("")
+  const [additionalInfoBlockState, setAdditionalInfoBlockState] = useState<AdditionalInfoBlock | null>(additionalInfoBlock || null)
+
+  // Load additional info block if not provided
+  useEffect(() => {
+    if (!additionalInfoBlock && open) {
+      const loadAdditionalInfo = async () => {
+        const supabase = createClient()
+        const { data } = await supabase
+          .from("content_blocks")
+          .select("*")
+          .eq("type", "additional_info")
+          .eq("is_active", true)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle()
+        // Check if block is enabled in settings
+        if (data && data.settings?.enabled) {
+          setAdditionalInfoBlockState(data as AdditionalInfoBlock)
+        } else {
+          setAdditionalInfoBlockState(null)
+        }
+      }
+      loadAdditionalInfo()
+    } else if (additionalInfoBlock) {
+      setAdditionalInfoBlockState(additionalInfoBlock)
+    } else {
+      setAdditionalInfoBlockState(null)
+    }
+  }, [open, additionalInfoBlock])
 
   // Initialize text values from productCharacteristics selected_values (for text type)
   useEffect(() => {
@@ -196,6 +240,16 @@ export function ProductCharacteristicsModal({
       }
     >
   }, [productCharacteristics, characteristicTypes, characteristicOptions, priceCombinations, selectedValues, textValues, colorPaletteValues])
+
+  // Check if product is available
+  const isProductAvailable = useMemo(() => {
+    // If there are price combinations, check if at least one is available
+    if (priceCombinations.length > 0) {
+      return priceCombinations.some(pc => pc.is_available)
+    }
+    // Otherwise, assume available
+    return true
+  }, [priceCombinations])
 
   // Calculate current price
   const { currentPrice, showFromPrice } = useMemo(() => {
@@ -314,7 +368,7 @@ export function ProductCharacteristicsModal({
     }))
   }
 
-  const handlePaletteColorSelect = (charTypeId: string, color: { id: string; name: string; hex: string }) => {
+  const handlePaletteColorSelect = (charTypeId: string, color: { id: string; name: string; hex: string; lch?: string; l?: number; c?: number; h?: number }) => {
     setColorPaletteValues((prev) => ({
       ...prev,
       [charTypeId]: color,
@@ -441,11 +495,25 @@ export function ProductCharacteristicsModal({
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{locale === "uk" ? product.name_uk : product.name_en}</DialogTitle>
+          <DialogDescription className="sr-only">
+            {locale === "uk" ? "Виберіть характеристики товару" : "Select product characteristics"}
+          </DialogDescription>
+          {/* Price */}
+          {isProductAvailable ? (
+            <div className="text-xl font-semibold">
+              {showFromPrice ? `${t("product.from")} ` : ""}
+              {currentPrice.toLocaleString("uk-UA")} {t("common.uah")}
+            </div>
+          ) : (
+            <div className="text-xl font-semibold text-muted-foreground">
+              {t("product.outOfStock")}
+            </div>
+          )}
         </DialogHeader>
 
         <div className="space-y-6 py-4">
           {/* Characteristics */}
-          {characteristics.length > 0 && (
+          {characteristics.length > 0 && isProductAvailable && (
             <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {characteristics.map((pc) => {
@@ -473,44 +541,56 @@ export function ProductCharacteristicsModal({
                         </Label>
                       ) : (
                         <>
-                          <Label htmlFor={pc.characteristic_type_id} className="text-sm font-medium gap-0 flex items-center">
-                            {locale === "uk" ? charType.name_uk : charType.name_en}
-                            {selectedDisplay?.text ? (
-                              <>
-                                <span>:</span>
-                                {isRequired && <span className="text-red-500">*</span>}
-                                {charType.input_type === "color_palette" && selectedDisplay.colorHex && (
-                                  <div
-                                    className="w-4 h-4 rounded border border-gray-300 ml-1.5 flex-shrink-0"
-                                    style={{ backgroundColor: selectedDisplay.colorHex }}
-                                  />
-                                )}
-                                <span className="text-[#D4834F] font-normal ml-1"> {selectedDisplay.text}</span>
-                              </>
-                            ) : (
-                              <>
-                                <span>:</span>
-                                {isRequired && <span className="text-red-500">*</span>}
-                              </>
-                            )}
-                          </Label>
-
-                      {charType.input_type === "select" && (
-                        <select
-                          value={(selectedValues[pc.characteristic_type_id] as string) || ""}
-                          onChange={(e) => handleSelectChange(pc.characteristic_type_id, e.target.value)}
-                          className={`flex h-10 w-full rounded-md border border-input bg-background px-3 pr-8 py-2 text-sm ${
-                            displayHasError ? "border-red-500" : ""
-                          }`}
-                        >
-                          <option value="">{t("product.selectOption")}</option>
-                          {pc.options.map((opt) => (
-                            <option key={opt.id} value={opt.id}>
-                              {(locale === "uk" ? opt.name_uk : opt.name_en) || opt.value}
-                            </option>
-                          ))}
-                        </select>
-                      )}
+                          {/* Select type - inline with label */}
+                          {charType.input_type === "select" ? (
+                            <Label htmlFor={pc.characteristic_type_id} className="text-sm font-medium gap-0 flex items-center flex-wrap">
+                              {locale === "uk" ? charType.name_uk : charType.name_en}
+                              {isRequired && <span className="text-red-500 ml-0.5">*</span>}
+                              <span className="mx-1">:</span>
+                              <select
+                                id={pc.characteristic_type_id}
+                                value={(selectedValues[pc.characteristic_type_id] as string) || ""}
+                                onChange={(e) => handleSelectChange(pc.characteristic_type_id, e.target.value)}
+                                className="appearance-none bg-transparent border-none outline-none text-[#D4834F] font-normal cursor-pointer pr-5 relative focus:outline-none"
+                                style={{
+                                  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23D4834F' d='M6 9L1 4h10z'/%3E%3C/svg%3E")`,
+                                  backgroundRepeat: 'no-repeat',
+                                  backgroundPosition: 'right center',
+                                  backgroundSize: '12px'
+                                }}
+                              >
+                                <option value="" className="text-muted-foreground">
+                                  {locale === "uk" ? "Виберіть..." : "Select..."}
+                                </option>
+                                {pc.options.map((opt) => (
+                                  <option key={opt.id} value={opt.id} className="text-foreground">
+                                    {(locale === "uk" ? opt.name_uk : opt.name_en) || opt.value}
+                                  </option>
+                                ))}
+                              </select>
+                            </Label>
+                          ) : (
+                            <>
+                              {/* Other types (checkbox, color_custom) - show label with selected value */}
+                              {charType.input_type !== "color_palette" && (
+                                <Label htmlFor={pc.characteristic_type_id} className="text-sm font-medium gap-0 flex items-center">
+                                  {locale === "uk" ? charType.name_uk : charType.name_en}
+                                  {selectedDisplay?.text ? (
+                                    <>
+                                      <span>:</span>
+                                      {isRequired && <span className="text-red-500">*</span>}
+                                      <span className="text-[#D4834F] font-normal ml-1"> {selectedDisplay.text}</span>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <span>:</span>
+                                      {isRequired && <span className="text-red-500">*</span>}
+                                    </>
+                                  )}
+                                </Label>
+                              )}
+                            </>
+                          )}
 
                       {charType.input_type === "checkbox" && (
                         <div className="space-y-2">
@@ -565,40 +645,58 @@ export function ProductCharacteristicsModal({
                       )}
 
                       {charType.input_type === "color_palette" && (
-                        <div className="space-y-2">
-                          <Button
-                            type="button"
-                            variant="outline"
-                            onClick={() => setPaletteModalOpen((prev) => ({ ...prev, [pc.characteristic_type_id]: true }))}
-                            className={displayHasError ? "border-red-500" : ""}
-                          >
-                            {t("product.viewPalette")}
-                          </Button>
-                          {colorPaletteValues[pc.characteristic_type_id] && (
-                            <div className="flex items-center gap-2">
-                              <div
-                                className="w-8 h-8 rounded-md border border-gray-300"
-                                style={{ backgroundColor: colorPaletteValues[pc.characteristic_type_id].hex }}
-                              />
-                              <span className="text-sm text-muted-foreground">
-                                {colorPaletteValues[pc.characteristic_type_id].name}
-                              </span>
-                            </div>
-                          )}
+                        <>
+                          <Label htmlFor={pc.characteristic_type_id} className="text-sm font-medium gap-0 flex items-center flex-wrap">
+                            {locale === "uk" ? charType.name_uk : charType.name_en}
+                            {isRequired && <span className="text-red-500 ml-0.5">*</span>}
+                            <span className="mx-1">:</span>
+                            {selectedDisplay?.text ? (
+                              <button
+                                type="button"
+                                onClick={() => setPaletteModalOpen((prev) => ({ ...prev, [pc.characteristic_type_id]: true }))}
+                                className="appearance-none bg-transparent border-none outline-none text-[#D4834F] font-normal cursor-pointer pr-5 relative focus:outline-none hover:opacity-80 transition-opacity flex items-center gap-1.5"
+                                style={{
+                                  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23D4834F' d='M6 9L1 4h10z'/%3E%3C/svg%3E")`,
+                                  backgroundRepeat: 'no-repeat',
+                                  backgroundPosition: 'right center',
+                                  backgroundSize: '12px'
+                                }}
+                              >
+                                {selectedDisplay.colorHex && (
+                                  <div
+                                    className="w-4 h-4 rounded border border-gray-300 flex-shrink-0"
+                                    style={{ backgroundColor: selectedDisplay.colorHex.startsWith('#') ? selectedDisplay.colorHex : `#${selectedDisplay.colorHex}` }}
+                                  />
+                                )}
+                                <span>{selectedDisplay.text}</span>
+                              </button>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => setPaletteModalOpen((prev) => ({ ...prev, [pc.characteristic_type_id]: true }))}
+                                className="appearance-none bg-transparent border-none outline-none text-[#D4834F] font-normal cursor-pointer pr-5 relative focus:outline-none hover:opacity-80 transition-opacity"
+                                style={{
+                                  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23D4834F' d='M6 9L1 4h10z'/%3E%3C/svg%3E")`,
+                                  backgroundRepeat: 'no-repeat',
+                                  backgroundPosition: 'right center',
+                                  backgroundSize: '12px'
+                                }}
+                              >
+                                {locale === "uk" ? "Виберіть..." : "Select..."}
+                              </button>
+                            )}
+                          </Label>
+                          
                           <CaparolPaletteModal
                             open={paletteModalOpen[pc.characteristic_type_id] || false}
                             onOpenChange={(open) => setPaletteModalOpen((prev) => ({ ...prev, [pc.characteristic_type_id]: open }))}
                             onSelect={(color) => handlePaletteColorSelect(pc.characteristic_type_id, color)}
                             selectedColorId={colorPaletteValues[pc.characteristic_type_id]?.id}
                           />
-                        </div>
-                      )}
-
                         </>
                       )}
 
-                      {displayHasError && (
-                        <p className="text-sm text-red-500">{t("product.requiredField")}</p>
+                        </>
                       )}
                     </div>
                   )
@@ -664,14 +762,30 @@ export function ProductCharacteristicsModal({
             />
           </div>
 
-          {/* Price */}
-          <div className="text-xl font-semibold">
-            {showFromPrice ? `${t("product.from")} ` : ""}
-            {currentPrice.toLocaleString("uk-UA")} {t("common.uah")}
-          </div>
+          {/* Additional Info Section */}
+          {additionalInfoBlockState && additionalInfoBlockState.settings?.enabled && (additionalInfoBlockState.content_uk || additionalInfoBlockState.content_en) && (
+            <>
+              <div className="border-t border-border pt-4 mt-4" />
+              <div className="space-y-2">
+                <h3 className="text-xs font-medium text-foreground">
+                  {locale === "uk" ? additionalInfoBlockState.title_uk : additionalInfoBlockState.title_en || "Additional Information"}
+                </h3>
+                <div 
+                  className="text-xs text-muted-foreground leading-relaxed [&_strong]:font-semibold [&_p]:mb-2 [&_p:last-child]:mb-0 [&_ul]:list-disc [&_ul]:ml-4 [&_ul]:mb-2 [&_ol]:list-decimal [&_ol]:ml-4 [&_ol]:mb-2 [&_li]:mb-1"
+                  dangerouslySetInnerHTML={{ 
+                    __html: locale === "uk" ? (additionalInfoBlockState.content_uk || "") : (additionalInfoBlockState.content_en || "")
+                  }}
+                />
+              </div>
+            </>
+          )}
 
-          {/* Validation errors */}
-          {validationErrors.length > 0 && (
+          {/* Validation errors or out of stock message */}
+          {!isProductAvailable ? (
+            <div className="text-sm text-muted-foreground">
+              {t("product.outOfStock")}
+            </div>
+          ) : validationErrors.length > 0 && (
             <div className="text-sm text-red-500">
               {t("product.fillRequiredFields")}: {validationErrors.join(", ")}
             </div>
@@ -684,8 +798,8 @@ export function ProductCharacteristicsModal({
           </Button>
           <Button
             onClick={handleAddToCart}
-            disabled={validationErrors.length > 0}
-            className="bg-[#D4834F] hover:bg-[#C17340]"
+            disabled={!isProductAvailable || validationErrors.length > 0}
+            className="bg-[#D4834F] hover:bg-[#C17340] disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {t("product.addToCart")}
           </Button>

@@ -5,11 +5,12 @@ import { ProductDetails } from "@/components/product/product-details"
 import { BackButton } from "@/components/product/back-button"
 import { RelatedProductsSection } from "@/components/product/related-products-section"
 import { ProductDescription } from "@/components/product/product-description"
+import { ProductStructuredData, BreadcrumbStructuredData } from "@/components/seo/structured-data"
 
 export const revalidate = 0 // Disable caching to always show fresh data
 
-export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params
+export async function generateMetadata({ params }: { params: Promise<{ locale: string; id: string }> }) {
+  const { locale, id } = await params
   const supabase = await createClient()
   const { data: product } = await supabase
     .from("products")
@@ -20,17 +21,55 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 
   if (!product) {
     return {
-      title: "Товар не знайдено - Lucerna Studio",
+      title: locale === "uk" ? "Товар не знайдено - Lucerna Studio" : "Product not found - Lucerna Studio",
     }
   }
+  
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://lucerna-studio.com"
+  const url = `${baseUrl}/${locale}/product/${id}`
+  const title = `${product.name_uk || product.name_en} - Lucerna Studio`
+  const description = product.description_uk || product.description_en || ""
+  const image = product.images && product.images.length > 0 
+    ? `${baseUrl}${product.images[0]}` 
+    : `${baseUrl}/og-image.jpg`
+  
   return {
-    title: `${product.name_uk || product.name_en} - Lucerna Studio`,
-    description: product.description_uk || product.description_en || "",
+    title,
+    description,
+    alternates: {
+      canonical: url,
+      languages: {
+        'uk-UA': `${baseUrl}/uk/product/${id}`,
+        'en-US': `${baseUrl}/en/product/${id}`,
+      },
+    },
+    openGraph: {
+      title,
+      description,
+      url,
+      siteName: "Lucerna Studio",
+      locale: locale === "uk" ? "uk_UA" : "en_US",
+      type: "website",
+      images: [
+        {
+          url: image,
+          width: 1200,
+          height: 630,
+          alt: title,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [image],
+    },
   }
 }
 
-export default async function ProductPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params
+export default async function ProductPage({ params }: { params: Promise<{ locale: string; id: string }> }) {
+  const { locale, id } = await params
   const supabase = await createClient()
 
   // Fetch product by slug
@@ -75,6 +114,41 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
     .from("product_characteristic_price_combinations")
     .select("*")
     .eq("product_id", product.id)
+
+  // Fetch additional info block - check settings.enabled instead of is_active
+  const { data: additionalInfoBlockData, error: additionalInfoError } = await supabase
+    .from("content_blocks")
+    .select("*")
+    .eq("type", "additional_info")
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle()
+  
+  // Debug logging (server-side)
+  if (additionalInfoBlockData) {
+    console.log("[Server] Additional info block loaded:", JSON.stringify(additionalInfoBlockData, null, 2))
+    console.log("[Server] Settings:", additionalInfoBlockData.settings)
+    console.log("[Server] Settings type:", typeof additionalInfoBlockData.settings)
+    console.log("[Server] Enabled:", additionalInfoBlockData.settings?.enabled)
+  } else {
+    console.log("[Server] No additional info block found or not active")
+    if (additionalInfoError) {
+      console.error("[Server] Error loading additional info block:", additionalInfoError)
+    }
+  }
+  
+  // Pass block to component - let component check if enabled
+  const additionalInfoBlock = additionalInfoBlockData || null
+
+  // Check if product is available
+  const isProductAvailable = (() => {
+    // If there are price combinations, check if at least one is available
+    if (priceCombinations && priceCombinations.length > 0) {
+      return priceCombinations.some((pc: any) => pc.is_available)
+    }
+    // Otherwise, check is_in_stock
+    return product.is_in_stock ?? true
+  })()
 
   // Fetch related products (from same categories)
   const { data: productCategories } = await supabase
@@ -161,8 +235,21 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
     })
   }
 
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lucerna-studio.com'
+  
+  // Prepare breadcrumb items
+  const breadcrumbItems = [
+    { name: locale === 'uk' ? 'Головна' : 'Home', url: `${baseUrl}/${locale}` },
+    { name: locale === 'uk' ? 'Каталог' : 'Catalog', url: `${baseUrl}/${locale}/catalog` },
+    { name: locale === 'uk' ? product.name_uk : product.name_en, url: `${baseUrl}/${locale}/product/${product.slug}` },
+  ]
+
   return (
     <main className="min-h-screen pb-[100px]">
+      {/* Structured Data */}
+      <ProductStructuredData product={product} locale={locale} />
+      <BreadcrumbStructuredData items={breadcrumbItems} />
+      
       <BackButton />
 
       {/* Product Details */}
@@ -173,6 +260,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
             <ProductGallery
               images={product.images || []}
               productName={product.name_uk || product.name_en}
+              isAvailable={isProductAvailable}
             />
             
             {/* Description - shown below gallery on desktop */}
@@ -202,6 +290,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
             characteristicTypes={characteristicTypes || []}
             characteristicOptions={characteristicOptions || []}
             priceCombinations={priceCombinations || []}
+            additionalInfoBlock={additionalInfoBlock || null}
           />
         </div>
       </section>

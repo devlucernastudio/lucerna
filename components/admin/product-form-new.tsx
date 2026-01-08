@@ -246,6 +246,19 @@ export function ProductFormNew({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [product])
 
+  // Sync general is_in_stock with price combinations when combinations change
+  // Only sync if there are combinations and not using stock quantity
+  useEffect(() => {
+    if (priceCombs.length > 0 && !useStockQuantity) {
+      const hasAnyAvailable = priceCombs.some(c => c.is_available)
+      // Only update if the value actually changed to avoid infinite loops
+      if (hasAnyAvailable !== formData.is_in_stock) {
+        setFormData(prev => ({ ...prev, is_in_stock: hasAnyAvailable }))
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [JSON.stringify(priceCombs.map(c => c.is_available)), useStockQuantity])
+
   // Auto-save function
   const autoSave = async () => {
     if (!product || isSaving || isSubmitting) return
@@ -1195,7 +1208,17 @@ export function ProductFormNew({
                 <div className="flex items-center gap-2">
                   <Switch
                     checked={formData.is_in_stock}
-                    onCheckedChange={(checked) => setFormData({ ...formData, is_in_stock: checked })}
+                    onCheckedChange={(checked) => {
+                      setFormData({ ...formData, is_in_stock: checked })
+                      // If there are price combinations, sync them with the general switch
+                      if (priceCombs.length > 0) {
+                        const updated = priceCombs.map(comb => ({
+                          ...comb,
+                          is_available: checked
+                        }))
+                        setPriceCombs(updated)
+                      }
+                    }}
                   />
                   <Label>В наявності</Label>
                 </div>
@@ -1303,12 +1326,17 @@ export function ProductFormNew({
                           return {
                             combination: comb,
                             price: existing?.price ?? formData.price,
-                            is_available: existing?.is_available ?? true,
+                            is_available: existing?.is_available ?? formData.is_in_stock ?? true,
                             stock: existing?.stock ?? null,
                           }
                         })
                         
                         setPriceCombs(newCombs)
+                        // Sync general switch with combinations
+                        const hasAnyAvailable = newCombs.some(c => c.is_available)
+                        if (hasAnyAvailable !== formData.is_in_stock) {
+                          setFormData(prev => ({ ...prev, is_in_stock: hasAnyAvailable }))
+                        }
                         showToast.success("Комбінації згенеровано")
                       } catch (error) {
                         console.error('Error generating combinations:', error)
@@ -1376,6 +1404,13 @@ export function ProductFormNew({
                                     const updated = [...priceCombs]
                                     updated[idx].is_available = checked
                                     setPriceCombs(updated)
+                                    // If at least one combination is available, set general switch to true
+                                    const hasAnyAvailable = updated.some(c => c.is_available)
+                                    if (hasAnyAvailable && !formData.is_in_stock) {
+                                      setFormData({ ...formData, is_in_stock: true })
+                                    } else if (!hasAnyAvailable && formData.is_in_stock) {
+                                      setFormData({ ...formData, is_in_stock: false })
+                                    }
                                   }}
                                 />
                                 <span className="text-xs text-muted-foreground">

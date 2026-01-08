@@ -124,3 +124,12 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer utilities {
+  @media (max-height: 670px) {
+    .modal-scale-67 { scale: 0.67; top: 15%; }
+  }
+  @media (max-height: 560px) {
+    .modal-scale-50 { scale: 0.5; top: 25%; }
+  }
+}

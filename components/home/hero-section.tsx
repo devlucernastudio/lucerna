@@ -79,7 +79,7 @@ export function HeroSection({ contentBlocks }: { contentBlocks: ContentBlock[] |
           src="/mainImg.jpg"
           alt="Lucerna hero"
           fill
-          className="object-cover will-change-transform"
+          className="object-cover justify-self-center lg:object-[center_60%] will-change-transform"
           style={{
             transform: `translate3d(0, ${scrollY * imageMultiplier}px, 0)`,
           }}
@@ -89,13 +89,13 @@ export function HeroSection({ contentBlocks }: { contentBlocks: ContentBlock[] |
       </div>
 
       <div
-        className="relative z-10 top-[27%] flex flex-col items-center gap-6 px-4 text-center md:top-[25%] will-change-transform"
+        className="relative z-10 top-[20%] flex flex-col items-center gap-6 px-4 text-center md:top-[10%] will-change-transform"
         style={{
           transform: `translate3d(0, ${scrollY * contentMultiplier}px, 0)`,
           opacity: Math.max(0, 1 - scrollY / opacityDivisor),
         }}
       >
-        <h1 className="text-balance font-serif text-4xl font-light tracking-wide text-white md:text-6xl">{title}</h1>
+        <h1 className="text-balance font-serif text-[28px] text-4xl font-light tracking-wide text-white md:text-6xl">{title}</h1>
         <p className="text-balance text-lg text-white/90 md:text-xl">{subtitle}</p>
         <Button size="lg" className="bg-[#D4834F] px-8 text-base hover:bg-[#C17340]" asChild>
           <LocaleLink href="/catalog">{t("home.hero.cta")}</LocaleLink>

@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -14,19 +14,66 @@ import { getTranslation } from "@/lib/translations"
 import { Footer } from "@/components/footer"
 import { createClient } from "@/lib/supabase/client"
 import { SocialMediaIcon } from "@/components/social-media-icons"
+import { showToast } from "@/lib/toast"
 
 export default function ContactsPage() {
   const { locale } = useI18n()
   const t = (key: string) => getTranslation(locale, key)
 
   const [isLoading, setIsLoading] = useState(false)
-  const [success, setSuccess] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     phone: "",
     message: "",
+    comment: "", // Honeypot field
   })
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
+
+  // Validation functions
+  const validateName = (name: string): string | null => {
+    if (!name.trim()) return locale === "uk" ? "Ім'я обов'язкове" : "Name is required"
+    if (!/^[a-zA-Zа-яА-ЯіІїЇєЄґҐ\s-]+$/.test(name.trim())) {
+      return locale === "uk" ? "Ім'я може містити тільки літери, пробіли та дефіс" : "Name can only contain letters, spaces, and hyphens"
+    }
+    return null
+  }
+
+  const validateEmail = (email: string): string | null => {
+    if (!email.trim()) return locale === "uk" ? "Email обов'язковий" : "Email is required"
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(email.trim())) {
+      return locale === "uk" ? "Невірний формат email" : "Invalid email format"
+    }
+    return null
+  }
+
+  const validatePhone = (phone: string): string | null => {
+    if (!phone) return null // Phone is optional
+    if (!/^\+?[0-9]+$/.test(phone.trim())) {
+      return locale === "uk" ? "Телефон може містити тільки цифри та + на початку" : "Phone can only contain digits and optional + at the start"
+    }
+    return null
+  }
+
+  const validateMessage = (message: string): string | null => {
+    if (!message.trim()) return locale === "uk" ? "Повідомлення обов'язкове" : "Message is required"
+    if (!/^[a-zA-Zа-яА-ЯіІїЇєЄґҐ0-9\s.,\-_+=()*?%;:№@#&!/]+$/.test(message.trim())) {
+      return locale === "uk" ? "Повідомлення містить недозволені символи" : "Message contains invalid characters"
+    }
+    return null
+  }
+
+  // Check if form is valid and all required fields are filled
+  const isFormValid = useMemo(() => {
+    return (
+      formData.name.trim() !== "" &&
+      formData.email.trim() !== "" &&
+      formData.message.trim() !== "" &&
+      Object.keys(validationErrors).length === 0
+    )
+  }, [formData, validationErrors])
 
   const [contactSettings, setContactSettings] = useState({
     email: "",
@@ -83,21 +130,122 @@ export default function ContactsPage() {
     }
   }
 
+  const handleChange = (field: string, value: string) => {
+    // Real-time validation for name field - block invalid characters
+    if (field === "name") {
+      // Only allow letters, spaces, and hyphens
+      if (value === "" || /^[a-zA-Zа-яА-ЯіІїЇєЄґҐ\s-]*$/.test(value)) {
+        setFormData((prev) => ({ ...prev, [field]: value }))
+      }
+      return
+    }
+    
+    // For message field - block invalid characters
+    if (field === "message") {
+      // Only allow text and allowed punctuation
+      if (value === "" || /^[a-zA-Zа-яА-ЯіІїЇєЄґҐ0-9\s.,\-_+=()*?%;:№@#&!/]*$/.test(value)) {
+        setFormData((prev) => ({ ...prev, [field]: value }))
+      }
+      return
+    }
+    
+    setFormData((prev) => ({ ...prev, [field]: value }))
+    
+    // Clear validation error for this field
+    if (validationErrors[field]) {
+      setValidationErrors((prev) => {
+        const newErrors = { ...prev }
+        delete newErrors[field]
+        return newErrors
+      })
+    }
+  }
+
+  const handleBlur = (field: string, value: string) => {
+    let error: string | null = null
+    
+    switch (field) {
+      case "name":
+        error = validateName(value)
+        break
+      case "email":
+        error = validateEmail(value)
+        break
+      case "phone":
+        error = validatePhone(value)
+        break
+      case "message":
+        error = validateMessage(value)
+        break
+    }
+    
+    if (error) {
+      setValidationErrors((prev) => ({ ...prev, [field]: error! }))
+    } else {
+      setValidationErrors((prev) => {
+        const newErrors = { ...prev }
+        delete newErrors[field]
+        return newErrors
+      })
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setError(null)
+
+    // Validate all fields
+    const errors: Record<string, string> = {}
+    const nameError = validateName(formData.name)
+    const emailError = validateEmail(formData.email)
+    const phoneError = validatePhone(formData.phone)
+    const messageError = validateMessage(formData.message)
+
+    if (nameError) errors.name = nameError
+    if (emailError) errors.email = emailError
+    if (phoneError) errors.phone = phoneError
+    if (messageError) errors.message = messageError
+
+    if (Object.keys(errors).length > 0) {
+      setValidationErrors(errors)
+      return
+    }
+
     setIsLoading(true)
 
-    // Simulate sending message
-    await new Promise((resolve) => setTimeout(resolve, 1500))
+    try {
+      const response = await fetch("/api/send-contact-form", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: formData.name.trim(),
+          email: formData.email.trim(),
+          phone: formData.phone.trim() || undefined,
+          message: formData.message.trim(),
+          comment: formData.comment, // Honeypot
+        }),
+      })
 
-    setSuccess(true)
-    setIsLoading(false)
+      const data = await response.json()
 
-    // Reset form after 3 seconds
-    setTimeout(() => {
-      setSuccess(false)
-      setFormData({ name: "", email: "", phone: "", message: "" })
-    }, 3000)
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || "Failed to send message")
+      }
+
+      showToast.success(locale === "uk" ? "Ваше повідомлення надіслано!" : "Your message has been sent!")
+      
+      // Reset form
+      setFormData({ name: "", email: "", phone: "", message: "", comment: "" })
+      setValidationErrors({})
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Failed to send message"
+      setError(errorMessage)
+      showToast.error(locale === "uk" ? `Помилка: ${errorMessage}` : `Error: ${errorMessage}`)
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const workingHours = locale === "uk" ? contactSettings.working_hours_uk : contactSettings.working_hours_en
@@ -122,14 +270,33 @@ export default function ContactsPage() {
                 </CardHeader>
                 <CardContent>
                   <form onSubmit={handleSubmit} className="space-y-4">
+                    {/* Honeypot field - hidden but not with display: none */}
+                    <div style={{ position: "absolute", left: "-9999px", width: "1px", height: "1px", overflow: "hidden" }}>
+                      <Label htmlFor="comment">Comment</Label>
+                      <Input
+                        id="comment"
+                        name="comment"
+                        type="text"
+                        value={formData.comment}
+                        onChange={(e) => handleChange("comment", e.target.value)}
+                        tabIndex={-1}
+                        autoComplete="off"
+                        aria-hidden="true"
+                      />
+                    </div>
+
                     <div className="space-y-2">
                       <Label htmlFor="name">{t("contacts.name")}*</Label>
                       <Input
                         id="name"
                         value={formData.name}
-                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        required
+                        onChange={(e) => handleChange("name", e.target.value)}
+                        onBlur={(e) => handleBlur("name", e.target.value)}
+                        className={validationErrors.name ? "border-red-500" : ""}
                       />
+                      {validationErrors.name && (
+                        <p className="text-sm text-red-500">{validationErrors.name}</p>
+                      )}
                     </div>
 
                     <div className="space-y-2">
@@ -138,9 +305,13 @@ export default function ContactsPage() {
                         id="email"
                         type="email"
                         value={formData.email}
-                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                        required
+                        onChange={(e) => handleChange("email", e.target.value)}
+                        onBlur={(e) => handleBlur("email", e.target.value)}
+                        className={validationErrors.email ? "border-red-500" : ""}
                       />
+                      {validationErrors.email && (
+                        <p className="text-sm text-red-500">{validationErrors.email}</p>
+                      )}
                     </div>
 
                     <div className="space-y-2">
@@ -149,8 +320,19 @@ export default function ContactsPage() {
                         id="phone"
                         type="tel"
                         value={formData.phone}
-                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                        onChange={(e) => {
+                          // Only allow digits and + at the start
+                          const value = e.target.value
+                          if (value === "" || /^\+?[0-9]*$/.test(value)) {
+                            handleChange("phone", value)
+                          }
+                        }}
+                        onBlur={(e) => handleBlur("phone", e.target.value)}
+                        className={validationErrors.phone ? "border-red-500" : ""}
                       />
+                      {validationErrors.phone && (
+                        <p className="text-sm text-red-500">{validationErrors.phone}</p>
+                      )}
                     </div>
 
                     <div className="space-y-2">
@@ -158,23 +340,25 @@ export default function ContactsPage() {
                       <Textarea
                         id="message"
                         value={formData.message}
-                        onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                        onChange={(e) => handleChange("message", e.target.value)}
+                        onBlur={(e) => handleBlur("message", e.target.value)}
                         rows={5}
-                        required
+                        className={validationErrors.message ? "border-red-500" : ""}
                       />
+                      {validationErrors.message && (
+                        <p className="text-sm text-red-500">{validationErrors.message}</p>
+                      )}
                     </div>
 
-                    {success && (
-                      <p className="text-sm text-green-600">
-                        {locale === "uk" ? "Ваше повідомлення надіслано!" : "Your message has been sent!"}
-                      </p>
+                    {error && (
+                      <p className="text-sm text-red-500">{error}</p>
                     )}
 
                     <Button
                       type="submit"
-                      className="w-full bg-[#D4834F] hover:bg-[#C17340]"
+                      className="w-full bg-[#D4834F] hover:bg-[#C17340] disabled:opacity-50 disabled:cursor-not-allowed"
                       size="lg"
-                      disabled={isLoading}
+                      disabled={isLoading || !isFormValid}
                     >
                       {isLoading ? (locale === "uk" ? "Надсилання..." : "Sending...") : t("contacts.send")}
                     </Button>

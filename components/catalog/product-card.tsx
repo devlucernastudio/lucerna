@@ -83,6 +83,41 @@ export function ProductCard({
   const productName = locale === "uk" ? product.name_uk : product.name_en
   const productDescription = locale === "uk" ? product.description_uk : product.description_en
 
+  // Check if product is available
+  const isProductAvailable = (() => {
+    // If there are price combinations, check if at least one is available
+    if (priceCombinations.length > 0) {
+      return priceCombinations.some(pc => pc.is_available)
+    }
+    // Otherwise, assume available (we don't have is_in_stock in product card props)
+    return true
+  })()
+
+  // Calculate minimum price and whether to show "від" prefix
+  const { displayPrice, showFromPrice } = (() => {
+    // Check if there are any price-affecting characteristics
+    const priceAffectingChars = productCharacteristics.filter((pc) => {
+      const charType = characteristicTypes.find(ct => ct.id === pc.characteristic_type_id)
+      const affectsPrice = pc.affects_price ?? charType?.affects_price
+      return affectsPrice === true && charType?.input_type !== "text" // Exclude text type
+    })
+
+    if (priceAffectingChars.length === 0) {
+      // No price-affecting characteristics, show regular price
+      return { displayPrice: product.price, showFromPrice: false }
+    }
+
+    // Has price-affecting characteristics, calculate minimum price
+    const allPrices = [
+      product.price,
+      ...priceCombinations
+        .filter(pc => pc.is_available)
+        .map(pc => pc.price)
+    ]
+    const minPrice = Math.min(...allPrices)
+    return { displayPrice: minPrice, showFromPrice: true }
+  })()
+
   const handleAddToCart = () => {
     if (hasCharacteristics) {
       // Open modal for products with characteristics
@@ -117,7 +152,7 @@ export function ProductCard({
               src={product.images?.[0] || "/placeholder.svg"}
               alt={productName || product.name_uk || product.name_en}
               fill
-              className="object-cover transition-transform hover:scale-105"
+              className={`object-cover transition-all ${!isProductAvailable ? "opacity-50 grayscale" : "hover:scale-105"}`}
             />
           </div>
         </LocaleLink>
@@ -127,31 +162,40 @@ export function ProductCard({
               {productName || product.name_uk || product.name_en}
             </h3>
           </LocaleLink>
-          {(() => {
-            const description = productDescription || product.description_uk || product.description_en || ""
-            // Strip HTML tags for display in card
-            const stripHtml = (html: string) => {
-              if (!html) return ""
-              return html.replace(/<[^>]*>/g, "").trim()
-            }
-            const plainDescription = stripHtml(description)
-            return plainDescription ? (
-              <p className="mb-2 line-clamp-2 text-sm text-muted-foreground flex-1">
-                {plainDescription}
-              </p>
-            ) : null
-          })()}
-          <div className="mt-auto">
-            <p className="mb-2 text-lg font-semibold text-foreground">
-              {product.price?.toLocaleString(locale === "uk" ? "uk-UA" : "en-US")} ₴
-            </p>
-            <Button
-              onClick={handleAddToCart}
-              className="w-full bg-[#D4834F] hover:bg-[#C17340]"
-            >
-              {t("product.addToCart")}
-            </Button>
-          </div>
+          <LocaleLink href={`/product/${product.slug}`} className="flex flex-col flex-1">
+            {(() => {
+              const description = productDescription || product.description_uk || product.description_en || ""
+              // Strip HTML tags for display in card
+              const stripHtml = (html: string) => {
+                if (!html) return ""
+                return html.replace(/<[^>]*>/g, "").trim()
+              }
+              const plainDescription = stripHtml(description)
+              return plainDescription ? (
+                <p className="mb-2 line-clamp-2 text-sm text-muted-foreground flex-1">
+                  {plainDescription}
+                </p>
+              ) : null
+            })()}
+            <div className="mt-auto">
+              {isProductAvailable ? (
+                <p className="mb-2 text-lg font-semibold text-foreground">
+                  {showFromPrice ? `${t("product.from")} ` : ""}{displayPrice?.toLocaleString(locale === "uk" ? "uk-UA" : "en-US")} {t("common.uah")}
+                </p>
+              ) : (
+                <p className="mb-2 text-lg font-semibold text-muted-foreground">
+                  {t("product.outOfStock")}
+                </p>
+              )}
+            </div>
+          </LocaleLink>
+          <Button
+            onClick={handleAddToCart}
+            disabled={!isProductAvailable}
+            className="w-full bg-[#D4834F] hover:bg-[#C17340] disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {t("product.addToCart")}
+          </Button>
         </CardContent>
       </Card>
 

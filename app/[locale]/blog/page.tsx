@@ -7,14 +7,49 @@ import { createClient } from "@/lib/supabase/server"
 import { BlogHeader } from "@/components/blog/blog-header"
 import { EmptyPosts } from "@/components/blog/empty-posts"
 
-export const metadata = {
-  title: "Блог - Lucerna Studio",
-  description: "Новини, статті та натхнення від Lucerna Studio",
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = await params
+  
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://lucerna-studio.com"
+  const url = `${baseUrl}/${locale}/blog`
+  
+  const title = locale === "uk" 
+    ? "Блог - Lucerna Studio"
+    : "Blog - Lucerna Studio"
+  
+  const description = locale === "uk"
+    ? "Новини, статті та натхнення від Lucerna Studio. Дізнайтеся про світло, дизайн та інтер'єр."
+    : "News, articles and inspiration from Lucerna Studio. Learn about light, design and interior."
+
+  return {
+    title,
+    description,
+    alternates: {
+      canonical: url,
+      languages: {
+        'uk-UA': `${baseUrl}/uk/blog`,
+        'en-US': `${baseUrl}/en/blog`,
+      },
+    },
+    openGraph: {
+      title,
+      description,
+      url,
+      siteName: "Lucerna Studio",
+      locale: locale === "uk" ? "uk_UA" : "en_US",
+      type: "website",
+    },
+    twitter: {
+      card: "summary",
+      title,
+      description,
+    },
+  }
 }
 
 export const revalidate = 0 // Disable caching to always show fresh data
 
-export default async function BlogPage() {
+export default async function BlogPage({ params }: { params: Promise<{ locale: string }> }) {
   const supabase = await createClient()
 
   // Fetch published blog posts from database

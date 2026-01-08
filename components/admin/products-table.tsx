@@ -1,26 +1,44 @@
 "use client"
 
+import { useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Pencil, Trash2 } from "lucide-react"
+import { Pencil, Trash2, Table2, List } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
+import { ProductsTableExtended } from "./products-table-extended"
 
 interface Product {
   id: string
   name_uk: string
   name_en: string
+  slug: string
   price: number
   stock: number
+  is_in_stock?: boolean
   is_featured: boolean
   is_active: boolean
   images: string[]
   productCategories?: Array<{
     name_uk: string
     name_en: string
+  }>
+  priceCombinations?: Array<{
+    is_available: boolean
+  }>
+  characteristics?: Array<{
+    characteristic_type_id: string
+    required: boolean | null
+    affects_price: boolean | null
+    name_uk: string
+    name_en: string
+  }>
+  detailedPriceCombinations?: Array<{
+    is_available: boolean
+    combination: any
   }>
 }
 
@@ -30,8 +48,33 @@ interface Category {
   name_en: string
 }
 
-export function ProductsTable({ products, categories }: { products: Product[]; categories: Category[] }) {
+interface CharacteristicOption {
+  id: string
+  characteristic_type_id: string
+  name_uk: string | null
+  name_en: string | null
+  value: string
+}
+
+interface CharacteristicType {
+  id: string
+  name_uk: string
+  name_en: string
+}
+
+export function ProductsTable({ 
+  products, 
+  categories,
+  characteristicOptions = [],
+  characteristicTypes = []
+}: { 
+  products: Product[]
+  categories: Category[]
+  characteristicOptions?: CharacteristicOption[]
+  characteristicTypes?: CharacteristicType[]
+}) {
   const router = useRouter()
+  const [viewMode, setViewMode] = useState<"standard" | "extended">("standard")
 
   const handleRowClick = (productId: string, e: React.MouseEvent) => {
     // Don't navigate if clicking on buttons or links
@@ -68,9 +111,63 @@ export function ProductsTable({ products, categories }: { products: Product[]; c
     )
   }
 
+  if (viewMode === "extended") {
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center justify-end gap-2">
+          <Button
+            variant={viewMode === "standard" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setViewMode("standard")}
+            className="bg-[#D4834F] hover:bg-[#C17340]"
+          >
+            <List className="h-4 w-4 mr-2" />
+            Стандартна таблиця
+          </Button>
+          <Button
+            variant={viewMode === "extended" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setViewMode("extended")}
+            className="bg-[#D4834F] hover:bg-[#C17340]"
+          >
+            <Table2 className="h-4 w-4 mr-2" />
+            Розширена таблиця
+          </Button>
+        </div>
+        <ProductsTableExtended 
+          products={products} 
+          categories={categories}
+          characteristicOptions={characteristicOptions}
+          characteristicTypes={characteristicTypes}
+        />
+      </div>
+    )
+  }
+
   return (
-    <Card>
-      <CardContent className="p-0">
+    <div className="space-y-4">
+      <div className="flex items-center justify-end gap-2 mb-4">
+        <Button
+          variant={viewMode === "standard" ? "default" : "outline"}
+          size="sm"
+          onClick={() => setViewMode("standard")}
+          className={viewMode === "standard" ? "bg-[#D4834F] hover:bg-[#C17340]" : ""}
+        >
+          <List className="h-4 w-4 mr-2" />
+          Стандартна таблиця
+        </Button>
+        <Button
+          variant={viewMode === "extended" ? "default" : "outline"}
+          size="sm"
+          onClick={() => setViewMode("extended")}
+          className={viewMode === "extended" ? "bg-[#D4834F] hover:bg-[#C17340]" : ""}
+        >
+          <Table2 className="h-4 w-4 mr-2" />
+          Розширена таблиця
+        </Button>
+      </div>
+      <Card>
+        <CardContent className="p-0">
         {/* Mobile/Tablet view */}
         <div className="block lg:hidden">
           <div className="divide-y divide-border">
@@ -109,7 +206,20 @@ export function ProductsTable({ products, categories }: { products: Product[]; c
                     </div>
                     <div>
                       <span className="text-muted-foreground">Наявність: </span>
-                      <span>{product.stock > 0 ? `${product.stock} шт.` : "Немає"}</span>
+                      <span>
+                        {(() => {
+                          // Check if product has price combinations
+                          if (product.priceCombinations && product.priceCombinations.length > 0) {
+                            const hasAvailable = product.priceCombinations.some(pc => pc.is_available)
+                            return hasAvailable ? "В наявності" : "Немає"
+                          }
+                          // Fallback to is_in_stock or stock
+                          if (product.is_in_stock !== undefined) {
+                            return product.is_in_stock ? "В наявності" : "Немає"
+                          }
+                          return product.stock > 0 ? `${product.stock} шт.` : "Немає"
+                        })()}
+                      </span>
                     </div>
                     <div className="flex flex-wrap gap-2 mt-2">
                       <span className={`inline-block px-2 py-0.5 rounded text-xs ${
@@ -203,7 +313,20 @@ export function ProductsTable({ products, categories }: { products: Product[]; c
                     <span className="font-medium text-foreground">{product.price.toLocaleString("uk-UA")} грн</span>
                   </td>
                   <td className="p-4">
-                    <span className="text-sm text-foreground">{product.stock > 0 ? `${product.stock} шт.` : "Немає"}</span>
+                    <span className="text-sm text-foreground">
+                      {(() => {
+                        // Check if product has price combinations
+                        if (product.priceCombinations && product.priceCombinations.length > 0) {
+                          const hasAvailable = product.priceCombinations.some(pc => pc.is_available)
+                          return hasAvailable ? "В наявності" : "Немає"
+                        }
+                        // Fallback to is_in_stock or stock
+                        if (product.is_in_stock !== undefined) {
+                          return product.is_in_stock ? "В наявності" : "Немає"
+                        }
+                        return product.stock > 0 ? `${product.stock} шт.` : "Немає"
+                      })()}
+                    </span>
                   </td>
                   <td className="p-4">
                     <div className="flex items-center gap-2">
@@ -247,5 +370,6 @@ export function ProductsTable({ products, categories }: { products: Product[]; c
         </div>
       </CardContent>
     </Card>
+    </div>
   )
 }

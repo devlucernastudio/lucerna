@@ -2,12 +2,63 @@ import { HeroSection } from "@/components/home/hero-section"
 import { FeaturedProducts } from "@/components/home/featured-products"
 import { FeaturesSection } from "@/components/home/features-section"
 import { AboutSection } from "@/components/home/about-section"
+import { CustomSection } from "@/components/home/custom-section"
 import { Footer } from "@/components/footer"
 import { createClient } from "@/lib/supabase/server"
+import type { Metadata } from "next"
 
 export const revalidate = 0 // Disable caching to always show fresh data
 
-export default async function HomePage() {
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
+  const { locale } = await params
+  
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://lucerna-studio.com"
+  const url = `${baseUrl}/${locale}`
+  
+  const title = locale === "uk" 
+    ? "Lucerna Studio - Живі форми світла"
+    : "Lucerna Studio - Living Forms of Light"
+  
+  const description = locale === "uk"
+    ? "Унікальні світильники ручної роботи від Lucerna Studio. Створюємо світло, яке надихає та перетворює простір."
+    : "Unique handmade lamps from Lucerna Studio. Creating light that inspires and transforms space."
+
+  return {
+    title,
+    description,
+    alternates: {
+      canonical: url,
+      languages: {
+        'uk-UA': `${baseUrl}/uk`,
+        'en-US': `${baseUrl}/en`,
+      },
+    },
+    openGraph: {
+      title,
+      description,
+      url,
+      siteName: "Lucerna Studio",
+      locale: locale === "uk" ? "uk_UA" : "en_US",
+      type: "website",
+      images: [
+        {
+          url: `${baseUrl}/og-image.jpg`,
+          width: 1200,
+          height: 630,
+          alt: title,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [`${baseUrl}/og-image.jpg`],
+    },
+  }
+}
+
+export default async function HomePage({ params }: { params: Promise<{ locale: string }> }) {
   const supabase = await createClient()
 
   // Fetch featured products from database
@@ -63,6 +114,7 @@ export default async function HomePage() {
   return (
     <main className="min-h-screen">
       <HeroSection contentBlocks={contentBlocks} />
+      <CustomSection contentBlocks={contentBlocks} />
       <FeaturedProducts 
         products={products || []}
         productCharacteristics={productCharacteristics || []}

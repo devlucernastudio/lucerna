@@ -13,9 +13,10 @@ import {
 interface ProductGalleryProps {
   images: Array<{ url: string; id?: string }> | string[]
   productName: string
+  isAvailable?: boolean
 }
 
-export function ProductGallery({ images, productName }: ProductGalleryProps) {
+export function ProductGallery({ images, productName, isAvailable = true }: ProductGalleryProps) {
   // Normalize images array
   const normalizedImages = images.map((img) =>
     typeof img === "string" ? { url: img } : img
@@ -110,7 +111,7 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
             src={mainImage?.url || "/placeholder.svg"}
             alt={`${productName} ${mainImageIndex + 1}`}
             fill
-            className="object-cover"
+            className={`object-cover transition-opacity ${!isAvailable ? "opacity-50 grayscale" : ""}`}
             priority
           />
         </button>
@@ -162,7 +163,7 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
                   src={image.url || "/placeholder.svg"}
                   alt={`${productName} thumbnail ${index + 1}`}
                   fill
-                  className="object-cover"
+                  className={`object-cover transition-opacity ${!isAvailable ? "opacity-50 grayscale" : ""}`}
                 />
               </button>
             ))}

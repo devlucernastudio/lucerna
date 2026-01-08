@@ -232,8 +232,8 @@ export function ContactSettingsManager() {
       {/* Notification Settings */}
       <Card>
         <CardHeader>
-          <CardTitle>Сповіщення про замовлення</CardTitle>
-          <CardDescription>Налаштування email для отримання сповіщень про нові замовлення через Resend</CardDescription>
+          <CardTitle>Сповіщення</CardTitle>
+          <CardDescription>Налаштування email для отримання сповіщень про нові замовлення та повідомлення з форми "Напишіть нам" через Resend</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>

@@ -6,21 +6,58 @@ import { CatalogHeader } from "@/components/catalog/catalog-header"
 import { ProductsCount } from "@/components/catalog/products-count"
 import { EmptyProducts } from "@/components/catalog/empty-products"
 
-export const metadata = {
-  title: "Каталог - Lucerna Studio",
-  description: "Переглянути всі світильники Lucerna Studio",
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = await params
+  
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://lucerna-studio.com"
+  const url = `${baseUrl}/${locale}/catalog`
+  
+  const title = locale === "uk" 
+    ? "Каталог - Lucerna Studio"
+    : "Catalog - Lucerna Studio"
+  
+  const description = locale === "uk"
+    ? "Переглянути всі світильники ручної роботи від Lucerna Studio. Унікальні дизайни для вашого інтер'єру."
+    : "Browse all handmade lamps from Lucerna Studio. Unique designs for your interior."
+
+  return {
+    title,
+    description,
+    alternates: {
+      canonical: url,
+      languages: {
+        'uk-UA': `${baseUrl}/uk/catalog`,
+        'en-US': `${baseUrl}/en/catalog`,
+      },
+    },
+    openGraph: {
+      title,
+      description,
+      url,
+      siteName: "Lucerna Studio",
+      locale: locale === "uk" ? "uk_UA" : "en_US",
+      type: "website",
+    },
+    twitter: {
+      card: "summary",
+      title,
+      description,
+    },
+  }
 }
 
 export const revalidate = 0 // Disable caching to always show fresh data
 
 export default async function CatalogPage({
+  params,
   searchParams,
 }: {
+  params: Promise<{ locale: string }>
   searchParams: Promise<{ category?: string }>
 }) {
   const supabase = await createClient()
-  const params = await searchParams
-  const categorySlug = params.category
+  const searchParamsData = await searchParams
+  const categorySlug = searchParamsData.category
 
   // Fetch categories
   const { data: categories } = await supabase
