@@ -192,7 +192,7 @@ export function ProductCard({
           <Button
             onClick={handleAddToCart}
             disabled={!isProductAvailable}
-            className="w-full bg-[#D4834F] hover:bg-[#C17340] disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full bg-[#D4834F] hover:bg-[#C17340] disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_1px_3px_0_#000000ad,0_1px_1px_-1px_#00000073]"
           >
             {t("product.addToCart")}
           </Button>

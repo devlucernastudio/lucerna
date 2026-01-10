@@ -148,7 +148,7 @@ export function ProductGallery({ images, productName, isAvailable = true }: Prod
       {/* Thumbnails */}
       {normalizedImages.length > 1 && (
         <div className="relative">
-          <div className="flex gap-2 max-w-[90vw] overflow-x-auto pb-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+          <div className="flex gap-2 max-w-[90vw] md:max-w-[80vw] justify-self-center lg:justify-self-auto xl:justify-self-auto 2xl:justify-self-auto overflow-x-auto pb-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             {normalizedImages.map((image, index) => (
               <button
                 key={index}

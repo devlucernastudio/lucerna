@@ -45,13 +45,13 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur-[3px] supports-[backdrop-filter]:bg-background/60">
-      <div className="container mx-auto flex h-17 items-center justify-between px-4">
+      <div className="container overflow-y-hidden mx-auto md:max-w-[58rem] lg:max-w-[64rem] xl:max-w-[80rem] 2xl:max-w-[96rem] flex h-17 items-center justify-between px-4">
         {/* Desktop Navigation */}
-        <div className="hidden md:flex items-center gap-8 w-[50.5%] justify-between">
+        <div className="hidden md:flex items-center gap-8 justify-between">
           <nav className="flex items-center gap-6">
             <LocaleLink 
               href="/" 
-              className={`text-sm font-medium transition-colors ${
+              className={`text-sm font-medium transition-colors btn-feedback ${
                 isActive("/") ? "text-[#D4834F]" : "hover:text-[#D4834F]"
               }`}
             >
@@ -59,7 +59,7 @@ export function Header() {
             </LocaleLink>
             <LocaleLink 
               href="/catalog" 
-              className={`text-sm font-medium transition-colors ${
+              className={`text-sm font-medium transition-colors btn-feedback ${
                 isActive("/catalog") ? "text-[#D4834F]" : "hover:text-[#D4834F]"
               }`}
             >
@@ -67,7 +67,7 @@ export function Header() {
             </LocaleLink>
             <LocaleLink 
               href="/blog" 
-              className={`text-sm font-medium transition-colors ${
+              className={`text-sm font-medium transition-colors btn-feedback ${
                 isActive("/blog") ? "text-[#D4834F]" : "hover:text-[#D4834F]"
               }`}
             >
@@ -75,7 +75,7 @@ export function Header() {
             </LocaleLink>
             <LocaleLink 
               href="/about" 
-              className={`text-sm font-medium transition-colors ${
+              className={`text-sm font-medium transition-colors btn-feedback ${
                 isActive("/about") ? "text-[#D4834F]" : "hover:text-[#D4834F]"
               }`}
             >
@@ -83,7 +83,7 @@ export function Header() {
             </LocaleLink>
             <LocaleLink 
               href="/contacts" 
-              className={`text-sm font-medium transition-colors ${
+              className={`text-sm font-medium transition-colors btn-feedback ${
                 isActive("/contacts") ? "text-[#D4834F]" : "hover:text-[#D4834F]"
               }`}
             >
@@ -91,13 +91,14 @@ export function Header() {
             </LocaleLink>
           </nav>
 
-          <LocaleLink href="/" className="flex items-center gap-2 scale-[1.8]">
-            <Image src="/logoLucerna.png" alt="Lucerna Studio" width={80} height={80} />
-          </LocaleLink>
+          
         </div>
+        <LocaleLink href="/" className="hidden md:flex ml-auto mr-auto items-center gap-2 scale-[1.8] btn-feedback">
+            <Image src="/logoLucerna.png" alt="Lucerna Studio logo" width={80} height={80} />
+          </LocaleLink>
 
         {/* Mobile: Menu button on left */}
-        <div className="md:hidden">
+        <div className="md:hidden btn-feedback">
           <Button
             variant="ghost"
             size="sm"
@@ -108,17 +109,17 @@ export function Header() {
         </div>
 
         {/* Mobile: Logo centered */}
-        <div className="md:hidden flex-1 flex justify-center">
+        <div className="md:hidden flex-1 flex justify-center btn-feedback">
           <LocaleLink href="/" className="flex items-center gap-2 scale-[1.8]">
             <Image src="/logoLucerna.png" alt="Lucerna Studio" width={80} height={80} />
           </LocaleLink>
         </div>
 
         {/* Desktop: Right side actions */}
-        <div className="hidden md:flex items-center gap-4">
+        <div className="hidden md:flex ml-auto items-center gap-4">
           <LanguageSwitcher />
           <Button variant="ghost" size="sm" asChild>
-            <LocaleLink href="/cart" className="relative">
+            <LocaleLink href="/cart" className="relative btn-feedback">
               <ShoppingCart className="h-5 w-5" />
               {totalItems > 0 && (
                 <span className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-[#D4834F] text-xs font-medium text-white">
@@ -132,7 +133,7 @@ export function Header() {
         {/* Mobile: Cart button on right */}
         <div className="md:hidden">
           <Button variant="ghost" size="sm" asChild>
-            <LocaleLink href="/cart" className="relative">
+            <LocaleLink href="/cart" className="relative btn-feedback">
               <ShoppingCart className="h-5 w-5" />
               {totalItems > 0 && (
                 <span className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-[#D4834F] text-xs font-medium text-white">
@@ -155,7 +156,7 @@ export function Header() {
               <SheetClose asChild>
                 <LocaleLink
                   href="/"
-                  className={`text-base font-medium transition-colors py-2 ${
+                  className={`text-base font-medium transition-colors py-2 btn-feedback ${
                     isActive("/") ? "text-[#D4834F]" : "hover:text-[#D4834F]"
                   }`}
                 >
@@ -165,7 +166,7 @@ export function Header() {
               <SheetClose asChild>
                 <LocaleLink
                   href="/catalog"
-                  className={`text-base font-medium transition-colors py-2 ${
+                  className={`text-base font-medium transition-colors py-2 btn-feedback ${
                     isActive("/catalog") ? "text-[#D4834F]" : "hover:text-[#D4834F]"
                   }`}
                 >
@@ -175,7 +176,7 @@ export function Header() {
               <SheetClose asChild>
                 <LocaleLink
                   href="/blog"
-                  className={`text-base font-medium transition-colors py-2 ${
+                  className={`text-base font-medium transition-colors py-2 btn-feedback ${
                     isActive("/blog") ? "text-[#D4834F]" : "hover:text-[#D4834F]"
                   }`}
                 >
@@ -185,7 +186,7 @@ export function Header() {
               <SheetClose asChild>
                 <LocaleLink
                   href="/about"
-                  className={`text-base font-medium transition-colors py-2 ${
+                  className={`text-base font-medium transition-colors py-2 btn-feedback ${
                     isActive("/about") ? "text-[#D4834F]" : "hover:text-[#D4834F]"
                   }`}
                 >
@@ -195,7 +196,7 @@ export function Header() {
               <SheetClose asChild>
                 <LocaleLink
                   href="/contacts"
-                  className={`text-base font-medium transition-colors py-2 ${
+                  className={`text-base font-medium transition-colors py-2 btn-feedback ${
                     isActive("/contacts") ? "text-[#D4834F]" : "hover:text-[#D4834F]"
                   }`}
                 >

@@ -22,7 +22,7 @@ export function LanguageSwitcher() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm" className="gap-2">
+        <Button variant="ghost" size="sm" className="gap-2 btn-feedback">
           <Globe className="h-4 w-4" />
           <span className="text-sm font-medium">{localeShortNames[locale]}</span>
           <ChevronDown className="h-4 w-4" />

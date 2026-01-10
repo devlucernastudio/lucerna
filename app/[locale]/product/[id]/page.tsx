@@ -124,18 +124,6 @@ export default async function ProductPage({ params }: { params: Promise<{ locale
     .limit(1)
     .maybeSingle()
   
-  // Debug logging (server-side)
-  if (additionalInfoBlockData) {
-    console.log("[Server] Additional info block loaded:", JSON.stringify(additionalInfoBlockData, null, 2))
-    console.log("[Server] Settings:", additionalInfoBlockData.settings)
-    console.log("[Server] Settings type:", typeof additionalInfoBlockData.settings)
-    console.log("[Server] Enabled:", additionalInfoBlockData.settings?.enabled)
-  } else {
-    console.log("[Server] No additional info block found or not active")
-    if (additionalInfoError) {
-      console.error("[Server] Error loading additional info block:", additionalInfoError)
-    }
-  }
   
   // Pass block to component - let component check if enabled
   const additionalInfoBlock = additionalInfoBlockData || null

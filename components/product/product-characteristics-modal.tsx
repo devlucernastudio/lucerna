@@ -103,6 +103,31 @@ export function ProductCharacteristicsModal({
   const [quantity, setQuantity] = useState(1)
   const [comment, setComment] = useState("")
   const [additionalInfoBlockState, setAdditionalInfoBlockState] = useState<AdditionalInfoBlock | null>(additionalInfoBlock || null)
+  const [modalMaxHeight, setModalMaxHeight] = useState<string>("85vh")
+
+  // Fix iOS Chrome viewport height issue
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      // Calculate safe viewport height for mobile
+      const setViewportHeight = () => {
+        const vh = window.innerHeight * 0.01
+        document.documentElement.style.setProperty("--vh", `${vh}px`)
+
+        // For modal max height, use 85% of actual viewport height
+        const maxHeight = window.innerHeight * 0.90
+        setModalMaxHeight(`${maxHeight}px`)
+      }
+
+      setViewportHeight()
+      window.addEventListener("resize", setViewportHeight)
+      window.addEventListener("orientationchange", setViewportHeight)
+
+      return () => {
+        window.removeEventListener("resize", setViewportHeight)
+        window.removeEventListener("orientationchange", setViewportHeight)
+      }
+    }
+  }, [])
 
   // Load additional info block if not provided
   useEffect(() => {
@@ -163,7 +188,7 @@ export function ProductCharacteristicsModal({
         )
       }
 
-      const appearsInCombinations = priceCombinations.some((pc) => 
+      const appearsInCombinations = priceCombinations.some((pc) =>
         pc.combination[charTypeId] !== undefined
       )
 
@@ -175,7 +200,7 @@ export function ProductCharacteristicsModal({
 
       const availableOptionIds = new Set<string>()
       const hasAnySelection = Object.keys(selectedValues).length > 0 || Object.keys(textValues).length > 0 || Object.keys(colorPaletteValues).length > 0
-      
+
       priceCombinations.forEach((pc) => {
         if (!hasAnySelection) {
           if (pc.combination[charTypeId]) {
@@ -183,13 +208,13 @@ export function ProductCharacteristicsModal({
           }
         } else {
           let matchesCurrentSelections = true
-          
+
           Object.keys(pc.combination).forEach((key) => {
             if (key === charTypeId) return
-            
+
             const currentValue = selectedValues[key] || textValues[key] || (colorPaletteValues[key] ? colorPaletteValues[key].id : null)
             const combinationValue = pc.combination[key]
-            
+
             if (currentValue) {
               if (Array.isArray(currentValue)) {
                 if (!currentValue.includes(combinationValue)) {
@@ -202,19 +227,19 @@ export function ProductCharacteristicsModal({
               }
             }
           })
-          
+
           if (matchesCurrentSelections && pc.combination[charTypeId]) {
             availableOptionIds.add(pc.combination[charTypeId])
           }
         }
       })
-      
+
       if (availableOptionIds.size === 0) {
         return characteristicOptions.filter(
           (co) => co.characteristic_type_id === charTypeId
         )
       }
-      
+
       return characteristicOptions.filter(
         (co) => co.characteristic_type_id === charTypeId && availableOptionIds.has(co.id)
       )
@@ -456,7 +481,7 @@ export function ProductCharacteristicsModal({
 
     showToast.success(t("product.productAddedToCart"))
     onOpenChange(false)
-    
+
     // Reset form
     setSelectedValues({})
     setTextValues({})
@@ -492,8 +517,12 @@ export function ProductCharacteristicsModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
+      <DialogContent
+        onOpenAutoFocus={(e) => e.preventDefault()}
+        style={{ maxHeight: modalMaxHeight }}
+        className="max-w-2xl max-w-[90vw] md:max-w-xl rounded-xl sm:rounded-xl flex flex-col p-0 overflow-hidden [&>button]:absolute [&>button]:top-4 [&>button]:right-2 [&>button]:z-50 [&>button]:bg-background/95 [&>button]:backdrop-blur-sm [&>button]:shadow-sm [&>button]:left-auto [&>button]:bottom-auto"
+      >
+        <DialogHeader className="sticky text-left top-0 z-40 bg-background border-b border-border px-6 pt-4 pb-2 shadow-sm rounded-t-xl sm:rounded-t-xl">
           <DialogTitle>{locale === "uk" ? product.name_uk : product.name_en}</DialogTitle>
           <DialogDescription className="sr-only">
             {locale === "uk" ? "Виберіть характеристики товару" : "Select product characteristics"}
@@ -511,7 +540,7 @@ export function ProductCharacteristicsModal({
           )}
         </DialogHeader>
 
-        <div className="space-y-6 py-4">
+        <div className="space-y-6 py-4 px-6 overflow-y-auto flex-1">
           {/* Characteristics */}
           {characteristics.length > 0 && isProductAvailable && (
             <div className="space-y-4">
@@ -521,7 +550,7 @@ export function ProductCharacteristicsModal({
                   const required = pc.required ?? charType.required
                   const isRequired = required === true
                   const selectedDisplay = getSelectedOptionDisplay(pc.characteristic_type_id, charType.input_type)
-                  
+
                   // Determine error state based on input type (text type doesn't need validation - it's readonly)
                   let displayHasError = false
                   if (isRequired && charType.input_type !== "text") {
@@ -545,19 +574,15 @@ export function ProductCharacteristicsModal({
                           {charType.input_type === "select" ? (
                             <Label htmlFor={pc.characteristic_type_id} className="text-sm font-medium gap-0 flex items-center flex-wrap">
                               {locale === "uk" ? charType.name_uk : charType.name_en}
-                              {isRequired && <span className="text-red-500 ml-0.5">*</span>}
-                              <span className="mx-1">:</span>
+                              <span className="mx-0">:</span>
+                              {isRequired && <span className="text-red-500">*</span>}
                               <select
                                 id={pc.characteristic_type_id}
                                 value={(selectedValues[pc.characteristic_type_id] as string) || ""}
                                 onChange={(e) => handleSelectChange(pc.characteristic_type_id, e.target.value)}
-                                className="appearance-none bg-transparent border-none outline-none text-[#D4834F] font-normal cursor-pointer pr-5 relative focus:outline-none"
-                                style={{
-                                  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23D4834F' d='M6 9L1 4h10z'/%3E%3C/svg%3E")`,
-                                  backgroundRepeat: 'no-repeat',
-                                  backgroundPosition: 'right center',
-                                  backgroundSize: '12px'
-                                }}
+                                className={`appearance-none btn-feedback select-arrow ml-1 bg-transparent border-none outline-none text-[#D4834F] font-normal cursor-pointer pr-5 relative focus:outline-none 
+                                  ${!selectedValues[pc.characteristic_type_id] ? "select-empty" : ""}
+                                  `}
                               >
                                 <option value="" className="text-muted-foreground">
                                   {locale === "uk" ? "Виберіть..." : "Select..."}
@@ -592,109 +617,98 @@ export function ProductCharacteristicsModal({
                             </>
                           )}
 
-                      {charType.input_type === "checkbox" && (
-                        <div className="space-y-2">
-                          {pc.options.map((opt) => (
-                            <label key={opt.id} className="flex items-center gap-2 cursor-pointer">
-                              <input
-                                type="checkbox"
-                                checked={(selectedValues[pc.characteristic_type_id] as string[])?.includes(opt.id) || false}
-                                onChange={(e) =>
-                                  handleCheckboxChange(pc.characteristic_type_id, opt.id, e.target.checked)
-                                }
-                                className="rounded"
-                              />
-                              <span>{(locale === "uk" ? opt.name_uk : opt.name_en) || opt.value}</span>
-                            </label>
-                          ))}
-                        </div>
-                      )}
-
-                      {charType.input_type === "color_custom" && (
-                        <div className="flex flex-wrap gap-1.5">
-                          {pc.options.map((opt) => {
-                            const isSelected = selectedValues[pc.characteristic_type_id] === opt.id
-                            return (
-                              <label
-                                key={opt.id}
-                                className="flex flex-col items-center gap-0.5 cursor-pointer group"
-                              >
-                                <input
-                                  type="radio"
-                                  name={pc.characteristic_type_id}
-                                  value={opt.id}
-                                  checked={isSelected}
-                                  onChange={(e) => handleSelectChange(pc.characteristic_type_id, e.target.value)}
-                                  className="sr-only"
-                                />
-                                <div
-                                  className={`w-8 h-8 rounded-md border-2 transition-all shadow-sm ${
-                                    isSelected 
-                                      ? "border-[#D4834F] scale-110 shadow-md" 
-                                      : "border-gray-300 group-hover:border-gray-400"
-                                  }`}
-                                  style={{ backgroundColor: opt.color_code || "#ccc" }}
-                                />
-                                <span className={`text-xs max-w-[60px] truncate ${isSelected ? "font-medium" : ""}`}>
-                                  {(locale === "uk" ? opt.name_uk : opt.name_en) || opt.value}
-                                </span>
-                              </label>
-                            )
-                          })}
-                        </div>
-                      )}
-
-                      {charType.input_type === "color_palette" && (
-                        <>
-                          <Label htmlFor={pc.characteristic_type_id} className="text-sm font-medium gap-0 flex items-center flex-wrap">
-                            {locale === "uk" ? charType.name_uk : charType.name_en}
-                            {isRequired && <span className="text-red-500 ml-0.5">*</span>}
-                            <span className="mx-1">:</span>
-                            {selectedDisplay?.text ? (
-                              <button
-                                type="button"
-                                onClick={() => setPaletteModalOpen((prev) => ({ ...prev, [pc.characteristic_type_id]: true }))}
-                                className="appearance-none bg-transparent border-none outline-none text-[#D4834F] font-normal cursor-pointer pr-5 relative focus:outline-none hover:opacity-80 transition-opacity flex items-center gap-1.5"
-                                style={{
-                                  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23D4834F' d='M6 9L1 4h10z'/%3E%3C/svg%3E")`,
-                                  backgroundRepeat: 'no-repeat',
-                                  backgroundPosition: 'right center',
-                                  backgroundSize: '12px'
-                                }}
-                              >
-                                {selectedDisplay.colorHex && (
-                                  <div
-                                    className="w-4 h-4 rounded border border-gray-300 flex-shrink-0"
-                                    style={{ backgroundColor: selectedDisplay.colorHex.startsWith('#') ? selectedDisplay.colorHex : `#${selectedDisplay.colorHex}` }}
+                          {charType.input_type === "checkbox" && (
+                            <div className="space-y-2">
+                              {pc.options.map((opt) => (
+                                <label key={opt.id} className="flex items-center gap-2 cursor-pointer btn-feedback">
+                                  <input
+                                    type="checkbox"
+                                    checked={(selectedValues[pc.characteristic_type_id] as string[])?.includes(opt.id) || false}
+                                    onChange={(e) =>
+                                      handleCheckboxChange(pc.characteristic_type_id, opt.id, e.target.checked)
+                                    }
+                                    className="rounded"
                                   />
+                                  <span>{(locale === "uk" ? opt.name_uk : opt.name_en) || opt.value}</span>
+                                </label>
+                              ))}
+                            </div>
+                          )}
+
+                          {charType.input_type === "color_custom" && (
+                            <div className="flex flex-wrap gap-1.5">
+                              {pc.options.map((opt) => {
+                                const isSelected = selectedValues[pc.characteristic_type_id] === opt.id
+                                return (
+                                  <label
+                                    key={opt.id}
+                                    className="flex flex-col items-center gap-0.5 cursor-pointer group btn-feedback"
+                                  >
+                                    <input
+                                      type="radio"
+                                      name={pc.characteristic_type_id}
+                                      value={opt.id}
+                                      checked={isSelected}
+                                      onChange={(e) => handleSelectChange(pc.characteristic_type_id, e.target.value)}
+                                      className="sr-only"
+                                    />
+                                    <div
+                                      className={`w-8 h-8 rounded-md border-2 transition-all shadow-sm ${isSelected
+                                          ? "border-[#D4834F] scale-110 shadow-md"
+                                          : "border-gray-300 group-hover:border-gray-400"
+                                        }`}
+                                      style={{ backgroundColor: opt.color_code || "#ccc" }}
+                                    />
+                                    <span className={`text-xs max-w-[60px] truncate ${isSelected ? "font-medium" : ""}`}>
+                                      {(locale === "uk" ? opt.name_uk : opt.name_en) || opt.value}
+                                    </span>
+                                  </label>
+                                )
+                              })}
+                            </div>
+                          )}
+
+                          {charType.input_type === "color_palette" && (
+                            <>
+                              <Label htmlFor={pc.characteristic_type_id} className="text-sm font-medium gap-0 flex items-center flex-wrap">
+                                {locale === "uk" ? charType.name_uk : charType.name_en}
+                                <span className="mx-0">:</span>
+                                {isRequired && <span className="text-red-500">*</span>}
+                                {selectedDisplay?.text ? (
+                                  <button
+                                    type="button"
+                                    onClick={() => setPaletteModalOpen((prev) => ({ ...prev, [pc.characteristic_type_id]: true }))}
+                                    className="appearance-none btn-feedback select-arrow ml-1 bg-transparent border-none outline-none text-[#D4834F] font-normal cursor-pointer pr-5 relative focus:outline-none hover:opacity-80 transition-opacity flex items-center gap-1.5"
+                                  >
+                                    {selectedDisplay.colorHex && (
+                                      <div
+                                        className="w-4 h-4 rounded border border-gray-300 flex-shrink-0"
+                                        style={{ backgroundColor: selectedDisplay.colorHex.startsWith('#') ? selectedDisplay.colorHex : `#${selectedDisplay.colorHex}` }}
+                                      />
+                                    )}
+                                    <span>{selectedDisplay.text}</span>
+                                  </button>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    onClick={() => setPaletteModalOpen((prev) => ({ ...prev, [pc.characteristic_type_id]: true }))}
+                                    className={`appearance-none btn-feedback select-arrow ml-1 bg-transparent border-none outline-none text-[#D4834F] font-normal cursor-pointer pr-5 relative focus:outline-none hover:opacity-80 transition-opacity 
+                                  ${!selectedDisplay?.text ? "select-empty" : ""}
+                                `}
+                                  >
+                                    {locale === "uk" ? "Виберіть..." : "Select..."}
+                                  </button>
                                 )}
-                                <span>{selectedDisplay.text}</span>
-                              </button>
-                            ) : (
-                              <button
-                                type="button"
-                                onClick={() => setPaletteModalOpen((prev) => ({ ...prev, [pc.characteristic_type_id]: true }))}
-                                className="appearance-none bg-transparent border-none outline-none text-[#D4834F] font-normal cursor-pointer pr-5 relative focus:outline-none hover:opacity-80 transition-opacity"
-                                style={{
-                                  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23D4834F' d='M6 9L1 4h10z'/%3E%3C/svg%3E")`,
-                                  backgroundRepeat: 'no-repeat',
-                                  backgroundPosition: 'right center',
-                                  backgroundSize: '12px'
-                                }}
-                              >
-                                {locale === "uk" ? "Виберіть..." : "Select..."}
-                              </button>
-                            )}
-                          </Label>
-                          
-                          <CaparolPaletteModal
-                            open={paletteModalOpen[pc.characteristic_type_id] || false}
-                            onOpenChange={(open) => setPaletteModalOpen((prev) => ({ ...prev, [pc.characteristic_type_id]: open }))}
-                            onSelect={(color) => handlePaletteColorSelect(pc.characteristic_type_id, color)}
-                            selectedColorId={colorPaletteValues[pc.characteristic_type_id]?.id}
-                          />
-                        </>
-                      )}
+                              </Label>
+
+                              <CaparolPaletteModal
+                                open={paletteModalOpen[pc.characteristic_type_id] || false}
+                                onOpenChange={(open) => setPaletteModalOpen((prev) => ({ ...prev, [pc.characteristic_type_id]: open }))}
+                                onSelect={(color) => handlePaletteColorSelect(pc.characteristic_type_id, color)}
+                                selectedColorId={colorPaletteValues[pc.characteristic_type_id]?.id}
+                              />
+                            </>
+                          )}
 
                         </>
                       )}
@@ -770,39 +784,40 @@ export function ProductCharacteristicsModal({
                 <h3 className="text-xs font-medium text-foreground">
                   {locale === "uk" ? additionalInfoBlockState.title_uk : additionalInfoBlockState.title_en || "Additional Information"}
                 </h3>
-                <div 
+                <div
                   className="text-xs text-muted-foreground leading-relaxed [&_strong]:font-semibold [&_p]:mb-2 [&_p:last-child]:mb-0 [&_ul]:list-disc [&_ul]:ml-4 [&_ul]:mb-2 [&_ol]:list-decimal [&_ol]:ml-4 [&_ol]:mb-2 [&_li]:mb-1"
-                  dangerouslySetInnerHTML={{ 
+                  dangerouslySetInnerHTML={{
                     __html: locale === "uk" ? (additionalInfoBlockState.content_uk || "") : (additionalInfoBlockState.content_en || "")
                   }}
                 />
               </div>
             </>
           )}
+        </div>
 
+        <DialogFooter className="sticky gap-2 bottom-0 z-40 bg-background border-t border-border px-6 py-4 shadow-sm rounded-b-xl sm:rounded-b-xl">
           {/* Validation errors or out of stock message */}
           {!isProductAvailable ? (
-            <div className="text-sm text-muted-foreground">
+            <div className="text-xs text-muted-foreground">
               {t("product.outOfStock")}
             </div>
           ) : validationErrors.length > 0 && (
-            <div className="text-sm text-red-500">
+            <div className="text-xs text-red-500">
               {t("product.fillRequiredFields")}: {validationErrors.join(", ")}
             </div>
           )}
-        </div>
-
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            {t("product.cancel")}
-          </Button>
-          <Button
-            onClick={handleAddToCart}
-            disabled={!isProductAvailable || validationErrors.length > 0}
-            className="bg-[#D4834F] hover:bg-[#C17340] disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {t("product.addToCart")}
-          </Button>
+          <div className="flex justify-between items-center gap-2">
+            <Button variant="outline" onClick={() => onOpenChange(false)}>
+              {t("product.cancel")}
+            </Button>
+            <Button
+              onClick={handleAddToCart}
+              disabled={!isProductAvailable || validationErrors.length > 0}
+              className="bg-[#D4834F] hover:bg-[#C17340] disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {t("product.addToCart")}
+            </Button>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>

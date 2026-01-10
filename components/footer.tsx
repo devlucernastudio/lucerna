@@ -61,7 +61,7 @@ export function Footer() {
   return (
     <footer className="border-t border-border bg-background">
       {/* Sticky logo bar */}
-      <div className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="border-b border-border">
         <div className="container mx-auto px-4 py-4 flex justify-center items-center">
           <Image
             src="/logoLucernaC.png"
@@ -94,7 +94,7 @@ export function Footer() {
                         className="text-muted-foreground hover:text-[#D4834F] transition-colors"
                         aria-label={link.platform}
                       >
-                        <SocialMediaIcon platform={link.platform} className="h-5 w-5" />
+                        <SocialMediaIcon platform={link.platform} className="h-5 w-5 btn-feedback" />
                       </a>
                     )
                   ))}
@@ -158,10 +158,10 @@ export function Footer() {
             <div>
               <h3 className="mb-4 text-lg font-semibold text-foreground">{t("contacts.title")}</h3>
               {contactSettings.email && (
-                <p className="text-sm text-muted-foreground">Email: {contactSettings.email}</p>
+                <p className="text-sm text-muted-foreground btn-feedback">Email: {contactSettings.email}</p>
               )}
               {contactSettings.phone && (
-                <p className="text-sm text-muted-foreground mt-2">
+                <p className="text-sm text-muted-foreground mt-2 btn-feedback">
                   {locale === "uk" ? "Телефон" : "Phone"}: {contactSettings.phone}
                 </p>
               )}

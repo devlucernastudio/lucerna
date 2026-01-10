@@ -35,7 +35,7 @@ export function CategoryFilter({ categories }: CategoryFilterProps) {
         <LocaleLink href="/catalog">
           <Badge
             variant={!selectedCategory ? "default" : "outline"}
-            className={`cursor-pointer transition-colors ${
+            className={`cursor-pointer transition-colors btn-feedback ${
               !selectedCategory
                 ? "bg-[#D4834F] text-white hover:bg-[#C17340]"
                 : "hover:bg-muted"
@@ -48,7 +48,7 @@ export function CategoryFilter({ categories }: CategoryFilterProps) {
           <LocaleLink key={category.id} href={`/catalog?category=${category.slug}`}>
             <Badge
               variant={selectedCategory === category.slug ? "default" : "outline"}
-              className={`cursor-pointer transition-colors ${
+              className={`cursor-pointer transition-colors btn-feedback ${
                 selectedCategory === category.slug
                   ? "bg-[#D4834F] text-white hover:bg-[#C17340]"
                   : "hover:bg-muted"

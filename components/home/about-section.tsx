@@ -41,7 +41,7 @@ export function AboutSection({ contentBlocks }: AboutSectionProps) {
               {content}
             </p>
           )}
-          <Button className="mt-8 bg-[#D4834F] hover:bg-[#C17340]" size="lg" asChild>
+          <Button className="mt-8 bg-[#D4834F] hover:bg-[#C17340] shadow-[0_1px_3px_0_#000000ad,0_1px_1px_-1px_#00000073]" size="lg" asChild>
             <LocaleLink href="/about">{locale === "uk" ? "Дізнатись більше" : "Learn More"}</LocaleLink>
           </Button>
         </div>

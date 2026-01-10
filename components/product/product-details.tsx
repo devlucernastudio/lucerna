@@ -131,7 +131,7 @@ export function ProductDetails({
       }
 
       // Check if this characteristic appears in any price combination
-      const appearsInCombinations = priceCombinations.some((pc) => 
+      const appearsInCombinations = priceCombinations.some((pc) =>
         pc.combination[charTypeId] !== undefined
       )
 
@@ -144,10 +144,10 @@ export function ProductDetails({
 
       // Get all unique option IDs for this characteristic from price combinations
       const availableOptionIds = new Set<string>()
-      
+
       // Check if there are any current selections (including color palette)
       const hasAnySelection = Object.keys(selectedValues).length > 0 || Object.keys(textValues).length > 0 || Object.keys(colorPaletteValues).length > 0
-      
+
       priceCombinations.forEach((pc) => {
         // If no selections made yet, show all options that appear in any combination
         if (!hasAnySelection) {
@@ -158,16 +158,16 @@ export function ProductDetails({
           // Check if this combination matches current selections (except the current characteristic)
           // Only check characteristics that have been selected
           let matchesCurrentSelections = true
-          
+
           Object.keys(pc.combination).forEach((key) => {
             if (key === charTypeId) {
               // This is the characteristic we're filtering for, skip it
               return
             }
-            
+
             const currentValue = selectedValues[key] || textValues[key] || colorPaletteValues[key]?.id
             const combinationValue = pc.combination[key]
-            
+
             // Only check if there's a current selection for this characteristic
             if (currentValue) {
               // Check if current selection matches combination
@@ -186,21 +186,21 @@ export function ProductDetails({
             // If no selection for this characteristic, don't check it
             // (combination might not require all characteristics to be selected)
           })
-          
+
           // If combination matches current selections, add its option for this characteristic
           if (matchesCurrentSelections && pc.combination[charTypeId]) {
             availableOptionIds.add(pc.combination[charTypeId])
           }
         }
       })
-      
+
       // If no options found in combinations, show all options (fallback)
       if (availableOptionIds.size === 0) {
         return characteristicOptions.filter(
           (co) => co.characteristic_type_id === charTypeId
         )
       }
-      
+
       // Filter options to only include those in availableOptionIds
       return characteristicOptions.filter(
         (co) => co.characteristic_type_id === charTypeId && availableOptionIds.has(co.id)
@@ -536,12 +536,12 @@ export function ProductDetails({
       {/* Characteristics */}
       {characteristics.length > 0 && isProductAvailable && (
         <div className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:[grid-template-columns:repeat(2,minmax(0,auto))] lg:[grid-template-columns:repeat(3,minmax(0,auto))] gap-4">
             {characteristics.map((pc) => {
               const charType = pc.characteristic_type
               const isRequired = pc.required ?? charType.required
               const selectedDisplay = getSelectedOptionDisplay(pc.characteristic_type_id, charType.input_type)
-              
+
               // Determine error state based on input type (text type doesn't need validation - it's readonly)
               let displayHasError = false
               if (isRequired && charType.input_type !== "text") {
@@ -565,18 +565,15 @@ export function ProductDetails({
                       {charType.input_type === "select" ? (
                         <Label className="text-sm font-medium gap-0 flex items-center flex-wrap">
                           {locale === "uk" ? charType.name_uk : charType.name_en}
-                          {isRequired && <span className="text-red-500 ml-0.5">*</span>}
-                          <span className="mx-1">:</span>
+                          <span className="mx-0">:</span>
+                          {isRequired && <span className="text-red-500">*</span>}
                           <select
                             value={(selectedValues[pc.characteristic_type_id] as string) || ""}
                             onChange={(e) => handleSelectChange(pc.characteristic_type_id, e.target.value)}
-                            className="appearance-none bg-transparent border-none outline-none text-[#D4834F] font-normal cursor-pointer pr-5 relative focus:outline-none"
-                            style={{
-                              backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23D4834F' d='M6 9L1 4h10z'/%3E%3C/svg%3E")`,
-                              backgroundRepeat: 'no-repeat',
-                              backgroundPosition: 'right center',
-                              backgroundSize: '12px'
-                            }}
+                            className={`
+                              appearance-none btn-feedback select-arrow ml-1 bg-transparent outline-none text-[#D4834F] font-normal cursor-pointer pr-5 relative focus:outline-none
+                              ${!selectedValues[pc.characteristic_type_id] ? "select-empty" : ""}
+                            `}
                           >
                             <option value="" className="text-muted-foreground">
                               {locale === "uk" ? "Виберіть..." : "Select..."}
@@ -615,7 +612,7 @@ export function ProductDetails({
                       {charType.input_type === "checkbox" && (
                         <div className="space-y-2">
                           {pc.options.map((opt) => (
-                            <label key={opt.id} className="flex items-center gap-2 cursor-pointer">
+                            <label key={opt.id} className="flex items-center gap-2 cursor-pointer btn-feedback">
                               <input
                                 type="checkbox"
                                 checked={(selectedValues[pc.characteristic_type_id] as string[])?.includes(opt.id) || false}
@@ -638,7 +635,7 @@ export function ProductDetails({
                             return (
                               <label
                                 key={opt.id}
-                                className="flex flex-col items-center gap-0.5 cursor-pointer group"
+                                className="flex flex-col items-center gap-0.5 cursor-pointer group btn-feedback"
                               >
                                 <input
                                   type="radio"
@@ -649,11 +646,10 @@ export function ProductDetails({
                                   className="sr-only"
                                 />
                                 <div
-                                  className={`w-8 h-8 rounded-md border-2 transition-all shadow-sm ${
-                                    isSelected 
-                                      ? "border-[#D4834F] ring-2 ring-[#D4834F]/30 scale-110" 
-                                      : "border-gray-300 group-hover:border-gray-400 group-hover:scale-105"
-                                  }`}
+                                  className={`w-8 h-8 rounded-md border-2 transition-all shadow-sm ${isSelected
+                                    ? "border-[#D4834F] ring-2 ring-[#D4834F]/30 scale-110"
+                                    : "border-gray-300 group-hover:border-gray-400 group-hover:scale-105"
+                                    }`}
                                   style={{ backgroundColor: opt.color_code || "#000000" }}
                                 />
                                 {((locale === "uk" ? opt.name_uk : opt.name_en) || opt.value) && (
@@ -667,58 +663,48 @@ export function ProductDetails({
                         </div>
                       )}
 
-                          {/* Color palette type - inline with label */}
-                          {charType.input_type === "color_palette" && (
-                            <>
-                              <Label className="text-sm font-medium gap-0 flex items-center flex-wrap">
-                                {locale === "uk" ? charType.name_uk : charType.name_en}
-                                {isRequired && <span className="text-red-500 ml-0.5">*</span>}
-                                <span className="mx-1">:</span>
-                                {selectedDisplay?.text ? (
-                                  <button
-                                    type="button"
-                                    onClick={() => setPaletteModalOpen((prev) => ({ ...prev, [pc.characteristic_type_id]: true }))}
-                                    className="appearance-none bg-transparent border-none outline-none text-[#D4834F] font-normal cursor-pointer pr-5 relative focus:outline-none hover:opacity-80 transition-opacity flex items-center gap-1.5"
-                                    style={{
-                                      backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23D4834F' d='M6 9L1 4h10z'/%3E%3C/svg%3E")`,
-                                      backgroundRepeat: 'no-repeat',
-                                      backgroundPosition: 'right center',
-                                      backgroundSize: '12px'
-                                    }}
-                                  >
-                                    {selectedDisplay.colorHex && (
-                                      <div
-                                        className="w-4 h-4 rounded border border-gray-300 flex-shrink-0"
-                                        style={{ backgroundColor: selectedDisplay.colorHex.startsWith('#') ? selectedDisplay.colorHex : `#${selectedDisplay.colorHex}` }}
-                                      />
-                                    )}
-                                    <span>{selectedDisplay.text}</span>
-                                  </button>
-                                ) : (
-                                  <button
-                                    type="button"
-                                    onClick={() => setPaletteModalOpen((prev) => ({ ...prev, [pc.characteristic_type_id]: true }))}
-                                    className="appearance-none bg-transparent border-none outline-none text-[#D4834F] font-normal cursor-pointer pr-5 relative focus:outline-none hover:opacity-80 transition-opacity"
-                                    style={{
-                                      backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23D4834F' d='M6 9L1 4h10z'/%3E%3C/svg%3E")`,
-                                      backgroundRepeat: 'no-repeat',
-                                      backgroundPosition: 'right center',
-                                      backgroundSize: '12px'
-                                    }}
-                                  >
-                                    {locale === "uk" ? "Виберіть..." : "Select..."}
-                                  </button>
+                      {/* Color palette type - inline with label */}
+                      {charType.input_type === "color_palette" && (
+                        <>
+                          <Label className="text-sm font-medium gap-0 flex items-center flex-wrap">
+                            {locale === "uk" ? charType.name_uk : charType.name_en}
+                            <span className="mx-0">:</span>
+                            {isRequired && <span className="text-red-500">*</span>}
+                            {selectedDisplay?.text ? (
+                              <button
+                                type="button"
+                                onClick={() => setPaletteModalOpen((prev) => ({ ...prev, [pc.characteristic_type_id]: true }))}
+                                className="appearance-none btn-feedback ml-1 select-arrow bg-transparent border-none outline-none text-[#D4834F] font-normal cursor-pointer pr-5 relative focus:outline-none hover:opacity-80 transition-opacity flex items-center gap-1.5"
+                              >
+                                {selectedDisplay.colorHex && (
+                                  <div
+                                    className="w-4 h-4 rounded border border-gray-300 flex-shrink-0"
+                                    style={{ backgroundColor: selectedDisplay.colorHex.startsWith('#') ? selectedDisplay.colorHex : `#${selectedDisplay.colorHex}` }}
+                                  />
                                 )}
-                              </Label>
-                          
-                              <CaparolPaletteModal
-                                open={paletteModalOpen[pc.characteristic_type_id] || false}
-                                onOpenChange={(open) => setPaletteModalOpen((prev) => ({ ...prev, [pc.characteristic_type_id]: open }))}
-                                onSelect={(color) => handlePaletteColorSelect(pc.characteristic_type_id, color)}
-                                selectedColorId={colorPaletteValues[pc.characteristic_type_id]?.id}
-                              />
-                            </>
-                          )}
+                                <span>{selectedDisplay.text}</span>
+                              </button>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => setPaletteModalOpen((prev) => ({ ...prev, [pc.characteristic_type_id]: true }))}
+                                className={`appearance-none btn-feedback ml-1 select-arrow bg-transparent border-none outline-none text-[#D4834F] font-normal cursor-pointer pr-5 relative focus:outline-none hover:opacity-80 transition-opacity 
+                                  ${!selectedDisplay?.text ? "select-empty" : ""}
+                                `}
+                              >
+                                {locale === "uk" ? "Виберіть..." : "Select..."}
+                              </button>
+                            )}
+                          </Label>
+
+                          <CaparolPaletteModal
+                            open={paletteModalOpen[pc.characteristic_type_id] || false}
+                            onOpenChange={(open) => setPaletteModalOpen((prev) => ({ ...prev, [pc.characteristic_type_id]: open }))}
+                            onSelect={(color) => handlePaletteColorSelect(pc.characteristic_type_id, color)}
+                            selectedColorId={colorPaletteValues[pc.characteristic_type_id]?.id}
+                          />
+                        </>
+                      )}
                     </>
                   )}
                 </div>
@@ -790,9 +776,9 @@ export function ProductDetails({
             <h3 className="text-sm font-medium text-foreground">
               {locale === "uk" ? additionalInfoBlock.title_uk : additionalInfoBlock.title_en || "Additional Information"}
             </h3>
-            <div 
+            <div
               className="text-xs text-muted-foreground leading-relaxed [&_strong]:font-semibold [&_p]:mb-2 [&_p:last-child]:mb-0 [&_ul]:list-disc [&_ul]:ml-4 [&_ul]:mb-2 [&_ol]:list-decimal [&_ol]:ml-4 [&_ol]:mb-2 [&_li]:mb-1"
-              dangerouslySetInnerHTML={{ 
+              dangerouslySetInnerHTML={{
                 __html: locale === "uk" ? (additionalInfoBlock.content_uk || "") : (additionalInfoBlock.content_en || "")
               }}
             />
@@ -804,12 +790,12 @@ export function ProductDetails({
       {(product.description_uk || product.description_en) && (
         <div className="lg:hidden border-y border-border py-6">
           <h2 className="mb-3 text-lg font-medium text-foreground">{t("product.description")}</h2>
-                <div 
-                  className="leading-relaxed text-muted-foreground [&_strong]:font-semibold [&_p]:mb-3 [&_p:last-child]:mb-0 [&_ul]:list-disc [&_ul]:ml-6 [&_ul]:mb-3 [&_ol]:list-decimal [&_ol]:ml-6 [&_ol]:mb-3 [&_li]:mb-1"
-                  dangerouslySetInnerHTML={{ 
-                    __html: product.description_uk || product.description_en || "" 
-                  }}
-                />
+          <div
+            className="leading-relaxed text-muted-foreground [&_strong]:font-semibold [&_p]:mb-3 [&_p:last-child]:mb-0 [&_ul]:list-disc [&_ul]:ml-6 [&_ul]:mb-3 [&_ol]:list-decimal [&_ol]:ml-6 [&_ol]:mb-3 [&_li]:mb-1"
+            dangerouslySetInnerHTML={{
+              __html: product.description_uk || product.description_en || ""
+            }}
+          />
         </div>
       )}
 
