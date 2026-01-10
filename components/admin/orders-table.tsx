@@ -9,8 +9,7 @@ import { formatDistanceToNow } from "date-fns"
 import { uk } from "date-fns/locale"
 import { ChevronDown, ChevronUp } from "lucide-react"
 import { useRouter, useSearchParams } from "next/navigation"
-import Link from "next/link"
-import caparolColors from "@/lib/caparol3d.json"
+import caparolColors from "@/lib/caparol-3d-plus.json"
 
 interface Order {
   id: string
@@ -106,16 +105,31 @@ export function OrdersTable({ orders, orderItemsByOrder = {} }: OrdersTableProps
   const getColorHex = (colorValue: string): string | null => {
     const colorsData = caparolColors as {
       system: string
-      note: string
-      groups: Array<{
-        group: string
-        colors: Array<{ id: string; name: string; hex: string }>
+      totalColors: number
+      stripSize: number
+      strips: Array<{
+        stripIndex: number
+        baseHue: number
+        colors: Array<{
+          name: string
+          hex: string
+          lch: string
+        }>
       }>
     }
     
-    for (const group of colorsData.groups) {
-      const color = group.colors.find(c => c.id === colorValue || c.name === colorValue)
-      if (color) return color.hex
+    // Search through all strips for matching color
+    for (const strip of colorsData.strips) {
+      const color = strip.colors.find(c => {
+        // Match by name (e.g., "3D Granit 5")
+        if (c.name === colorValue) return true
+        // Match by hex (e.g., "3E3D3D" or "#3E3D3D")
+        if (c.hex === colorValue || `#${c.hex}` === colorValue) return true
+        // Match by hex without # prefix
+        if (colorValue.replace('#', '') === c.hex) return true
+        return false
+      })
+      if (color) return `#${color.hex}`
     }
     
     // If it's already a hex color code, return it
@@ -128,11 +142,13 @@ export function OrdersTable({ orders, orderItemsByOrder = {} }: OrdersTableProps
 
   // Helper function to check if a value might be a color (has hex code or is from Caparol palette)
   const isColorValue = (value: string): boolean => {
-    // Check if it's a hex color
-    if (value.match(/^#[0-9A-Fa-f]{6}$/)) return true
-    // Check if it matches Caparol color ID pattern (e.g., "3D-Lavendel-10")
+    // Check if it's a hex color (with or without #)
+    if (value.match(/^#?[0-9A-Fa-f]{6}$/)) return true
+    // Check if it matches Caparol color name pattern (e.g., "3D Granit 5", "3D-Lavendel-10")
+    if (value.match(/^3D\s?[A-Za-z]+\s?\d+$/i)) return true
     if (value.match(/^3D-[A-Za-z]+-\d+$/)) return true
-    return false
+    // Check if getColorHex can find it
+    return getColorHex(value) !== null
   }
 
   return (
