@@ -80,6 +80,8 @@ export function OrganizationStructuredData({ socialMedia = [] }: OrganizationStr
     '@context': 'https://schema.org',
     '@type': 'Organization',
     name: 'Lucerna Studio',
+    alternateName: ['Люцерна Студіо', 'Луцерна Студія'],
+    description: 'Унікальні світильники ручної роботи від Lucerna Studio',
     url: baseUrl,
     logo: `${baseUrl}/logoLucernaC.png`,
     ...(sameAs.length > 0 && { sameAs }),

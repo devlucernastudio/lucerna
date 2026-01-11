@@ -101,10 +101,10 @@ export function Header() {
         <div className="md:hidden btn-feedback">
           <Button
             variant="ghost"
-            size="sm"
+            className="h-full"
             onClick={() => setMobileMenuOpen(true)}
           >
-            <Menu className="h-5 w-5" />
+            <Menu style={{height: 22, width: 22}} className="h-5 w-5" />
           </Button>
         </div>
 
@@ -120,7 +120,7 @@ export function Header() {
           <LanguageSwitcher />
           <Button variant="ghost" size="sm" asChild>
             <LocaleLink href="/cart" className="relative btn-feedback">
-              <ShoppingCart className="h-5 w-5" />
+              <ShoppingCart style={{height: 22, width: 22}} className="h-5 w-5" />
               {totalItems > 0 && (
                 <span className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-[#D4834F] text-xs font-medium text-white">
                   {totalItems}
@@ -134,7 +134,7 @@ export function Header() {
         <div className="md:hidden">
           <Button variant="ghost" size="sm" asChild>
             <LocaleLink href="/cart" className="relative btn-feedback">
-              <ShoppingCart className="h-5 w-5" />
+              <ShoppingCart style={{height: 22, width: 22}} className="h-5 w-5" />
               {totalItems > 0 && (
                 <span className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-[#D4834F] text-xs font-medium text-white">
                   {totalItems}

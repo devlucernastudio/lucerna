@@ -81,7 +81,7 @@ export const translations = {
       info: "Інформація",
     },
     footer: {
-      rights: "© 2025 Lucerna Studio. Всі права захищені.",
+      rights: "© 2025 Lucerna Studio | Люцерна Студіо. Всі права захищені.",
       handmade: "Ручна робота з любов'ю",
     },
     common: {
