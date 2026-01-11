@@ -15,8 +15,7 @@ const _geist = Geist({ subsets: ["latin"] })
 const _geistMono = Geist_Mono({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "Lucerna Studio - Живі форми світла",
-  description: "Унікальні світильники ручної роботи від Lucerna Studio",
+  manifest: "/manifest.webmanifest",
   generator: "Lucerna Studio",
   icons: {
     icon: [
@@ -24,8 +23,7 @@ export const metadata: Metadata = {
       { url: "/favicon.ico", media: "(prefers-color-scheme: light)" },
     ],
     apple: [
-      { url: "/apple-touch-icon.png", media: "(prefers-color-scheme: light)" },
-      { url: "/apple-touch-icon-dark.png", media: "(prefers-color-scheme: dark)" },
+      { url: "/apple-icon.png", sizes: "180x180" },
     ],
   },
 }
