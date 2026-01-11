@@ -86,6 +86,8 @@ export function ProductGallery({ images, productName, isAvailable = true }: Prod
           src="/placeholder.svg"
           alt={productName}
           fill
+          sizes="(max-width: 768px) 100vw, 50vw"
+          quality={85}
           className="object-cover"
           priority
         />
@@ -111,6 +113,8 @@ export function ProductGallery({ images, productName, isAvailable = true }: Prod
             src={mainImage?.url || "/placeholder.svg"}
             alt={`${productName} ${mainImageIndex + 1}`}
             fill
+            sizes="(max-width: 768px) 100vw, 50vw"
+            quality={85}
             className={`object-cover transition-opacity ${!isAvailable ? "opacity-50 grayscale" : ""}`}
             priority
           />
@@ -163,6 +167,8 @@ export function ProductGallery({ images, productName, isAvailable = true }: Prod
                   src={image.url || "/placeholder.svg"}
                   alt={`${productName} thumbnail ${index + 1}`}
                   fill
+                  sizes="80px"
+                  quality={75}
                   className={`object-cover transition-opacity ${!isAvailable ? "opacity-50 grayscale" : ""}`}
                 />
               </button>
@@ -255,6 +261,8 @@ export function ProductGallery({ images, productName, isAvailable = true }: Prod
                   alt={`${productName} ${lightboxIndex + 1}`}
                   width={1200}
                   height={1200}
+                  sizes="95vw"
+                  quality={90}
                   className="max-w-full max-h-full w-auto h-auto object-contain"
                   priority
                 />

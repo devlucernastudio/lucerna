@@ -152,6 +152,8 @@ export function ProductCard({
               src={product.images?.[0] || "/placeholder.svg"}
               alt={productName || product.name_uk || product.name_en}
               fill
+              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+              quality={85}
               className={`object-cover transition-all ${!isProductAvailable ? "opacity-50 grayscale" : "hover:scale-105"}`}
             />
           </div>
@@ -193,6 +195,7 @@ export function ProductCard({
             onClick={handleAddToCart}
             disabled={!isProductAvailable}
             className="w-full bg-[#D4834F] hover:bg-[#C17340] disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_1px_3px_0_#000000ad,0_1px_1px_-1px_#00000073]"
+            aria-label={locale === "uk" ? `Додати ${productName || product.name_uk || product.name_en} до кошика` : `Add ${productName || product.name_en || product.name_uk} to cart`}
           >
             {t("product.addToCart")}
           </Button>

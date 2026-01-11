@@ -7,7 +7,7 @@ import { Footer } from "@/components/footer"
 import { createClient } from "@/lib/supabase/server"
 import type { Metadata } from "next"
 
-export const revalidate = 0 // Disable caching to always show fresh data
+export const revalidate = 60 // Cache for 60 seconds (ISR)
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale } = await params

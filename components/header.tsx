@@ -14,6 +14,7 @@ import {
   SheetContent,
   SheetHeader,
   SheetTitle,
+  SheetDescription,
   SheetClose,
 } from "@/components/ui/sheet"
 import Image from "next/image"
@@ -149,7 +150,10 @@ export function Header() {
       <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
         <SheetContent side="left" className="w-[300px] sm:w-[400px] bg-background/95 backdrop-blur-[3px] supports-[backdrop-filter]:bg-background/85">
           <SheetHeader>
-            <SheetTitle>Меню</SheetTitle>
+            <SheetTitle>{locale === "uk" ? "Меню" : "Menu"}</SheetTitle>
+            <SheetDescription className="sr-only">
+              {locale === "uk" ? "Навігаційне меню сайту" : "Site navigation menu"}
+            </SheetDescription>
           </SheetHeader>
           <div className="flex flex-col h-full">
             <nav className="flex flex-col gap-4 mt-6 flex-1">

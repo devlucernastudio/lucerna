@@ -10,7 +10,12 @@ export function BackButton() {
 
   return (
     <div className="container mx-auto px-4 py-6">
-      <Button variant="ghost" asChild className="gap-2 text-muted-foreground hover:text-foreground">
+      <Button 
+        variant="ghost" 
+        asChild 
+        className="gap-2 text-muted-foreground hover:text-foreground"
+        aria-label={locale === "uk" ? "Назад до каталогу" : "Back to catalog"}
+      >
         <LocaleLink href="/catalog">
           <ChevronLeft className="h-4 w-4 btn-feedback" />
           {locale === "uk" ? "Назад до каталогу" : "Back to catalog"}

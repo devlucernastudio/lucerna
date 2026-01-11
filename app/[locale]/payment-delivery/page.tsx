@@ -12,7 +12,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
     : "Payment & Delivery - Lucerna Studio"
   
   const description = locale === "uk"
-    ? "Умови оплати та доставки товарів Lucerna Studio. Способи оплати, терміни доставки та виготовлення."
+    ? "Умови оплати та доставки товарів Lucerna Studio | Люцерна Студіо. Способи оплати, терміни доставки та виготовлення."
     : "Payment and delivery terms for Lucerna Studio products. Payment methods, delivery and production terms."
 
   return {
@@ -78,7 +78,7 @@ function getContent(locale: string) {
       },
       production: {
         title: "Терміни виготовлення",
-        p1: "Стандартні товари (товари, що є на сайті): термін виготовлення становить до 4 тижнів з моменту підтвердження оплати.",
+        p1: "Стандартні товари (товари, що є на сайті): термін виготовлення становить до 6 тижнів з моменту підтвердження оплати.",
         p2: "Індивідуальні замовлення: терміни виготовлення узгоджуються з замовником при підтвердженні замовлення та можуть відрізнятися залежно від складності виробу.",
         p3: "Про готовність замовлення ми повідомляємо на email, вказаний при оформленні замовлення.",
       },
@@ -142,7 +142,7 @@ function getContent(locale: string) {
       },
       production: {
         title: "Production Terms",
-        p1: "Standard products (products available on the website): production time is up to 4 weeks from the moment of payment confirmation.",
+        p1: "Standard products (products available on the website): production time is up to 6 weeks from the moment of payment confirmation.",
         p2: "Individual orders: production terms are agreed with the customer upon order confirmation and may vary depending on the complexity of the product.",
         p3: "We notify you of order readiness to the email specified during checkout.",
       },

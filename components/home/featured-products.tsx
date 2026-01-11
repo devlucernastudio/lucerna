@@ -95,6 +95,7 @@ export function FeaturedProducts({
           variant="outline"
           className="border-[#D4834F] text-[#D4834F] hover:bg-[#D4834F] hover:text-white bg-transparent shadow-[0_1px_3px_0_#00000038,0_1px_1px_-1px_#00000073]"
           asChild
+          aria-label={locale === "uk" ? "Дивитись всі товари в каталозі" : "View all products in catalog"}
         >
           <Link href="/catalog">{t("home.viewAll")}</Link>
         </Button>

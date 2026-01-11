@@ -126,6 +126,11 @@ export function Footer() {
                     {t("nav.contacts")}
                   </LocaleLink>
                 </li>
+                <li>
+                  <LocaleLink href="/collaboration" className="text-muted-foreground hover:text-[#D4834F]">
+                    {locale === "uk" ? "Співпраця" : "Collaboration"}
+                  </LocaleLink>
+                </li>
               </ul>
             </div>
             <div>

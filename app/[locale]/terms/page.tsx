@@ -39,10 +39,10 @@ function getContent(locale: string) {
       sections: {
         general: {
           title: "1. Загальні положення",
-          p1: 'Ця публічна оферта (далі - "Оферта") є офіційною пропозицією ФОП Симканич Вікторія Василівна, Lucerna Studio (далі - "Продавець") укласти договір купівлі-продажу товарів на викладених нижче умовах.',
+          p1: 'Ця публічна оферта (далі - "Оферта") є офіційною пропозицією ФОП Симканич Михайло Михайлович, Lucerna Studio (далі - "Продавець") укласти договір купівлі-продажу товарів на викладених нижче умовах.',
           p2: "Визначення термінів:",
           items: [
-            { label: "Продавець", text: "- ФОП Симканич Вікторія Василівна, Lucerna Studio - інтернет-магазин світильників ручної роботи" },
+            { label: "Продавець", text: "- ФОП Симканич Михайло Михайлович, Lucerna Studio - інтернет-магазин світильників ручної роботи" },
             { label: "Покупець", text: "- фізична або юридична особа, яка прийняла умови цієї Оферти" },
             { label: "Товар", text: "- світильники та аксесуари, представлені в каталозі інтернет-магазину" },
             { label: "Замовлення", text: "- прийняте Продавцем рішення Покупця придбати товар" },
@@ -146,10 +146,10 @@ function getContent(locale: string) {
       sections: {
         general: {
           title: "1. General Provisions",
-          p1: 'This public offer (hereinafter - "Offer") is an official proposal by FOP Symkanych Viktoriia Vasylivna, Lucerna Studio (hereinafter - "Seller") to enter into a purchase and sale agreement for goods under the conditions set forth below.',
+          p1: 'This public offer (hereinafter - "Offer") is an official proposal by FOP Symkanych Mykhailo Mykhailovych, Lucerna Studio (hereinafter - "Seller") to enter into a purchase and sale agreement for goods under the conditions set forth below.',
           p2: "Definition of terms:",
           items: [
-            { label: "Seller", text: "- FOP Symkanych Viktoriia Vasylivna, Lucerna Studio - online store of handmade lamps" },
+            { label: "Seller", text: "- FOP Symkanych Mykhailo Mykhailovych, Lucerna Studio - online store of handmade lamps" },
             { label: "Buyer", text: "- an individual or legal entity that has accepted the terms of this Offer" },
             { label: "Product", text: "- lamps and accessories presented in the online store catalog" },
             { label: "Order", text: "- the Seller's acceptance of the Buyer's decision to purchase a product" },

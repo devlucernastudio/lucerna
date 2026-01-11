@@ -83,6 +83,7 @@ export const translations = {
     footer: {
       rights: "© 2025 Lucerna Studio | Люцерна Студіо. Всі права захищені.",
       handmade: "Ручна робота з любов'ю",
+      collaboration: "Співпраця",
     },
     common: {
       uah: "грн",
@@ -174,6 +175,7 @@ export const translations = {
     footer: {
       rights: "© 2025 Lucerna Studio. All rights reserved.",
       handmade: "Handmade with love",
+      collaboration: "Collaboration",
     },
     common: {
       uah: "UAH",
