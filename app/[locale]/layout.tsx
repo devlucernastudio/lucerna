@@ -5,9 +5,10 @@ import { createClient } from "@/lib/supabase/server"
 
 
 export async function generateMetadata(
-  { params }: { params: { locale: string } }
+  { params }: { params: Promise<{ locale: string }> }
 ): Promise<Metadata> {
-  const isEn = params.locale === "en"
+  const { locale } = await params
+  const isEn = locale === "en"
 
   return {
     title: isEn
@@ -19,7 +20,7 @@ export async function generateMetadata(
       : "Унікальні світильники ручної роботи від Lucerna Studio | Люцерна Студіо",
 
     alternates: {
-      canonical: `/${params.locale}`,
+      canonical: `/${locale}`,
       languages: {
         uk: "/uk",
         en: "/en",
