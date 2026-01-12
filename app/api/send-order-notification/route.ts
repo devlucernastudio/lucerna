@@ -5,7 +5,7 @@ export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
     const body = await request.json()
-    const { orderNumber, customerName, customerEmail, customerPhone, total, items } = body
+    const { orderNumber, customerName, customerEmail, customerPhone, customerCity, customerAddress, notes, total, items } = body
 
     // Get notification settings from database
     const { data: settings } = await supabase
@@ -25,28 +25,72 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: true, message: "Resend API key not configured" })
     }
 
-    // Format order items for email
-    const itemsList = items
-      .map(
-        (item: any) =>
-          `- ${item.product_name} (${item.quantity} шт.) × ${item.product_price.toLocaleString("uk-UA")} грн = ${item.subtotal.toLocaleString("uk-UA")} грн`
-      )
-      .join("\n")
+    // Format order items for HTML email
+    const formatItemCharacteristics = (characteristics: any): string => {
+      if (!characteristics || Object.keys(characteristics).length === 0) return ""
+      
+      let result = ""
+      if (Array.isArray(characteristics)) {
+        characteristics.forEach((char: any) => {
+          const charName = char?.name || "Характеристика"
+          const charValue = char?.value || char || ""
+          result += `<div style="margin-left: 15px; margin-top: 5px;"><strong>${charName}:</strong> ${String(charValue)}</div>`
+        })
+      } else {
+        Object.entries(characteristics).forEach(([key, value]) => {
+          const valueStr = typeof value === "object" && value !== null && "value" in value
+            ? String((value as any).value)
+            : String(value)
+          result += `<div style="margin-left: 15px; margin-top: 5px;"><strong>${key}:</strong> ${valueStr}</div>`
+        })
+      }
+      return result
+    }
 
-    // Format characteristics if present
-    const itemsWithChars = items.map((item: any) => {
-      let itemText = `- ${item.product_name} (${item.quantity} шт.) × ${item.product_price.toLocaleString("uk-UA")} грн = ${item.subtotal.toLocaleString("uk-UA")} грн`
+    const itemsHtml = items.map((item: any, index: number) => {
+      const characteristicsHtml = formatItemCharacteristics(item.characteristics)
+      const commentHtml = item.comment ? `<div style="margin-left: 15px; margin-top: 5px; font-style: italic; color: #666;"><strong>Коментар:</strong> ${item.comment}</div>` : ""
+      
+      return `
+        <div style="padding: 12px; margin-bottom: 10px; background-color: #fafafa; border-left: 3px solid #D4834F; border-radius: 4px;">
+          <div style="font-weight: 600; color: #333; margin-bottom: 8px;">${index + 1}. ${item.product_name}</div>
+          <div style="color: #666; font-size: 14px; margin-bottom: 5px;">
+            Кількість: ${item.quantity} шт. × ${item.product_price.toLocaleString("uk-UA")} грн = <strong>${item.subtotal.toLocaleString("uk-UA")} грн</strong>
+          </div>
+          ${characteristicsHtml}
+          ${commentHtml}
+        </div>
+      `
+    }).join("")
+
+    // Format order items for plain text email
+    const itemsText = items.map((item: any, index: number) => {
+      let itemText = `${index + 1}. ${item.product_name}\n`
+      itemText += `   Кількість: ${item.quantity} шт. × ${item.product_price.toLocaleString("uk-UA")} грн = ${item.subtotal.toLocaleString("uk-UA")} грн\n`
+      
       if (item.characteristics && Object.keys(item.characteristics).length > 0) {
-        const chars = Object.entries(item.characteristics)
-          .map(([key, value]) => `${key}: ${value}`)
-          .join(", ")
-        itemText += `\n  Характеристики: ${chars}`
+        if (Array.isArray(item.characteristics)) {
+          item.characteristics.forEach((char: any) => {
+            const charName = char?.name || "Характеристика"
+            const charValue = char?.value || char || ""
+            itemText += `   ${charName}: ${String(charValue)}\n`
+          })
+        } else {
+          Object.entries(item.characteristics).forEach(([key, value]) => {
+            const valueStr = typeof value === "object" && value !== null && "value" in value
+              ? String((value as any).value)
+              : String(value)
+            itemText += `   ${key}: ${valueStr}\n`
+          })
+        }
       }
+      
       if (item.comment) {
-        itemText += `\n  Коментар: ${item.comment}`
+        itemText += `   Коментар: ${item.comment}\n`
       }
+      
       return itemText
-    }).join("\n\n")
+    }).join("\n")
 
     // Email subject
     const subject = `Нове замовлення ${orderNumber} - Lucerna Studio`
@@ -63,8 +107,9 @@ export async function POST(request: NextRequest) {
             .header { background-color: #D4834F; color: white; padding: 20px; text-align: center; }
             .content { padding: 20px; background-color: #f9f9f9; }
             .order-info { background-color: white; padding: 15px; margin: 15px 0; border-radius: 5px; }
+            .order-info p { margin: 8px 0; }
             .items { background-color: white; padding: 15px; margin: 15px 0; border-radius: 5px; }
-            .total { font-size: 18px; font-weight: bold; color: #D4834F; margin-top: 15px; }
+            .total { font-size: 18px; font-weight: bold; color: #D4834F; margin-top: 15px; text-align: right; padding: 15px; background-color: white; border-radius: 5px; }
             .footer { text-align: center; padding: 20px; color: #666; font-size: 12px; }
           </style>
         </head>
@@ -79,11 +124,14 @@ export async function POST(request: NextRequest) {
                 <p><strong>Ім'я:</strong> ${customerName}</p>
                 <p><strong>Телефон:</strong> ${customerPhone}</p>
                 ${customerEmail ? `<p><strong>Email:</strong> ${customerEmail}</p>` : ""}
+                ${customerCity ? `<p><strong>Місто:</strong> ${customerCity}</p>` : ""}
+                ${customerAddress ? `<p><strong>Адреса:</strong> ${customerAddress}</p>` : ""}
+                ${notes ? `<p style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #ddd;"><strong>Коментар до замовлення:</strong><br>${notes.replace(/\n/g, "<br>")}</p>` : ""}
               </div>
               
               <div class="items">
                 <h2>Товари:</h2>
-                <pre style="white-space: pre-wrap; font-family: Arial, sans-serif;">${itemsWithChars}</pre>
+                ${itemsHtml}
               </div>
               
               <div class="total">
@@ -106,9 +154,12 @@ export async function POST(request: NextRequest) {
 Ім'я: ${customerName}
 Телефон: ${customerPhone}
 ${customerEmail ? `Email: ${customerEmail}` : ""}
+${customerCity ? `Місто: ${customerCity}` : ""}
+${customerAddress ? `Адреса: ${customerAddress}` : ""}
+${notes ? `\nКоментар до замовлення:\n${notes}` : ""}
 
 Товари:
-${itemsWithChars}
+${itemsText}
 
 Загальна сума: ${total.toLocaleString("uk-UA")} грн
     `

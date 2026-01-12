@@ -49,7 +49,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
       url,
       siteName: "Lucerna Studio",
       locale: locale === "uk" ? "uk_UA" : "en_US",
-      type: "product",
+      type: "website",
       images: [
         {
           url: image,

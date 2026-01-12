@@ -123,6 +123,9 @@ export default function CheckoutPage() {
             customerName: fullName,
             customerEmail: formData.email.trim() || null,
             customerPhone: formData.phone,
+            customerCity: formData.city,
+            customerAddress: formData.address,
+            notes: formData.notes.trim() || null,
             total: totalPrice,
             items: orderItems.map((item: any) => ({
               product_name: item.product_name,
