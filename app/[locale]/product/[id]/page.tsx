@@ -24,15 +24,15 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
       title: locale === "uk" ? "Товар не знайдено - Lucerna Studio" : "Product not found - Lucerna Studio",
     }
   }
-  
+
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://lucerna-studio.com"
   const url = `${baseUrl}/${locale}/product/${id}`
   const title = `${product.name_uk || product.name_en} - Lucerna Studio`
   const description = product.description_uk || product.description_en || ""
-  const image = product.images && product.images.length > 0 
-    ? `${baseUrl}${product.images[0]}` 
+  const image = product.images && product.images.length > 0
+    ? (product.images[0].startsWith('http') ? product.images[0] : `${baseUrl}${product.images[0]}`)
     : `${baseUrl}/og-image.jpg`
-  
+
   return {
     title,
     description,
@@ -49,7 +49,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
       url,
       siteName: "Lucerna Studio",
       locale: locale === "uk" ? "uk_UA" : "en_US",
-      type: "website",
+      type: "product",
       images: [
         {
           url: image,
@@ -94,19 +94,19 @@ export default async function ProductPage({ params }: { params: Promise<{ locale
   const characteristicTypeIds = productCharacteristics?.map((pc) => pc.characteristic_type_id) || []
   const { data: characteristicTypes } = characteristicTypeIds.length > 0
     ? await supabase
-        .from("characteristic_types")
-        .select("*")
-        .in("id", characteristicTypeIds)
-        .order("position", { ascending: true })
+      .from("characteristic_types")
+      .select("*")
+      .in("id", characteristicTypeIds)
+      .order("position", { ascending: true })
     : { data: [] }
 
   // Fetch characteristic options
   const { data: characteristicOptions } = characteristicTypeIds.length > 0
     ? await supabase
-        .from("characteristic_options")
-        .select("*")
-        .in("characteristic_type_id", characteristicTypeIds)
-        .order("position", { ascending: true })
+      .from("characteristic_options")
+      .select("*")
+      .in("characteristic_type_id", characteristicTypeIds)
+      .order("position", { ascending: true })
     : { data: [] }
 
   // Fetch price combinations
@@ -123,8 +123,8 @@ export default async function ProductPage({ params }: { params: Promise<{ locale
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle()
-  
-  
+
+
   // Pass block to component - let component check if enabled
   const additionalInfoBlock = additionalInfoBlockData || null
 
@@ -147,7 +147,7 @@ export default async function ProductPage({ params }: { params: Promise<{ locale
   let relatedProducts: any[] = []
   if (productCategories && productCategories.length > 0) {
     const categoryIds = productCategories.map((pc) => pc.category_id)
-    
+
     // First get product IDs from same categories
     const { data: relatedProductIds } = await supabase
       .from("product_categories")
@@ -171,34 +171,34 @@ export default async function ProductPage({ params }: { params: Promise<{ locale
   const relatedProductIds = relatedProducts.map((p) => p.id)
   const { data: relatedProductCharacteristics } = relatedProductIds.length > 0
     ? await supabase
-        .from("product_characteristics")
-        .select("*")
-        .in("product_id", relatedProductIds)
+      .from("product_characteristics")
+      .select("*")
+      .in("product_id", relatedProductIds)
     : { data: [] }
 
   // Fetch characteristic types for related products
   const relatedCharTypeIds = relatedProductCharacteristics?.map((pc) => pc.characteristic_type_id) || []
   const { data: relatedCharacteristicTypes } = relatedCharTypeIds.length > 0
     ? await supabase
-        .from("characteristic_types")
-        .select("*")
-        .in("id", [...new Set(relatedCharTypeIds)])
+      .from("characteristic_types")
+      .select("*")
+      .in("id", [...new Set(relatedCharTypeIds)])
     : { data: [] }
 
   // Fetch characteristic options for related products
   const { data: relatedCharacteristicOptions } = relatedCharTypeIds.length > 0
     ? await supabase
-        .from("characteristic_options")
-        .select("*")
-        .in("characteristic_type_id", [...new Set(relatedCharTypeIds)])
+      .from("characteristic_options")
+      .select("*")
+      .in("characteristic_type_id", [...new Set(relatedCharTypeIds)])
     : { data: [] }
 
   // Fetch price combinations for related products
   const { data: relatedPriceCombinations } = relatedProductIds.length > 0
     ? await supabase
-        .from("product_characteristic_price_combinations")
-        .select("*")
-        .in("product_id", relatedProductIds)
+      .from("product_characteristic_price_combinations")
+      .select("*")
+      .in("product_id", relatedProductIds)
     : { data: [] }
 
   // Group characteristics and price combinations by product_id
@@ -224,7 +224,7 @@ export default async function ProductPage({ params }: { params: Promise<{ locale
   }
 
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lucerna-studio.com'
-  
+
   // Prepare breadcrumb items
   const breadcrumbItems = [
     { name: locale === 'uk' ? 'Головна' : 'Home', url: `${baseUrl}/${locale}` },
@@ -237,7 +237,7 @@ export default async function ProductPage({ params }: { params: Promise<{ locale
       {/* Structured Data */}
       <ProductStructuredData product={product} locale={locale} isAvailable={isProductAvailable} />
       <BreadcrumbStructuredData items={breadcrumbItems} />
-      
+
       <BackButton />
 
       {/* Product Details */}
@@ -250,7 +250,7 @@ export default async function ProductPage({ params }: { params: Promise<{ locale
               productName={product.name_uk || product.name_en}
               isAvailable={isProductAvailable}
             />
-            
+
             {/* Description - shown below gallery on desktop */}
             <ProductDescription
               descriptionUk={product.description_uk}

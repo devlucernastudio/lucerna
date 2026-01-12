@@ -13,8 +13,10 @@ import GoogleAnalytics from "@/components/GoogleAnalytics"
 
 const _geist = Geist({ subsets: ["latin"] })
 const _geistMono = Geist_Mono({ subsets: ["latin"] })
+const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://lucerna-studio.com"
 
 export const metadata: Metadata = {
+  
   manifest: "/manifest.webmanifest",
   generator: "Lucerna Studio",
   icons: {
@@ -25,6 +27,24 @@ export const metadata: Metadata = {
     apple: [
       { url: "/apple-icon.png", sizes: "180x180" },
     ],
+  },
+  openGraph: {
+    url: baseUrl,
+    siteName: "Lucerna Studio",
+    type: "website",
+    images: [
+      {
+        url: `${baseUrl}/og-image.jpg`,
+        width: 1200,
+        height: 630,
+        alt: "Lucerna Studio",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Lucerna Studio",
+    images: [`${baseUrl}/og-image.jpg`],
   },
 }
 
