@@ -28,7 +28,12 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://lucerna-studio.com"
   const url = `${baseUrl}/${locale}/product/${id}`
   const title = `${product.name_uk || product.name_en} - Lucerna Studio`
-  const description = product.description_uk || product.description_en || ""
+  const descriptionRaw = product.description_uk || product.description_en || ""
+  const description = descriptionRaw
+    .replace(/<[^>]*>/g, '')
+    .replace(/\s+/g, ' ') 
+    .trim()
+    .substring(0, 300)
   const image = product.images && product.images.length > 0
     ? (product.images[0].startsWith('http') ? product.images[0] : `${baseUrl}${product.images[0]}`)
     : `${baseUrl}/og-image.jpg`
