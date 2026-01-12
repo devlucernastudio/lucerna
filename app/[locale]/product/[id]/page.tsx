@@ -235,7 +235,7 @@ export default async function ProductPage({ params }: { params: Promise<{ locale
   return (
     <main className="min-h-screen pb-[100px]">
       {/* Structured Data */}
-      <ProductStructuredData product={product} locale={locale} />
+      <ProductStructuredData product={product} locale={locale} isAvailable={isProductAvailable} />
       <BreadcrumbStructuredData items={breadcrumbItems} />
       
       <BackButton />

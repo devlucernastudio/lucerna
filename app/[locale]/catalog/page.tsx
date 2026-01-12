@@ -13,11 +13,11 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   const url = `${baseUrl}/${locale}/catalog`
   
   const title = locale === "uk" 
-    ? "Каталог - Lucerna Studio"
+    ? "Каталог - Lucerna Studio | Люцерна Студіо"
     : "Catalog - Lucerna Studio"
   
   const description = locale === "uk"
-    ? "Переглянути всі світильники ручної роботи від Lucerna Studio. Унікальні дизайни для вашого інтер'єру."
+    ? "Переглянути всі світильники ручної роботи від Lucerna Studio | Люцерна Студіо. Унікальні дизайни для вашого інтер'єру."
     : "Browse all handmade lamps from Lucerna Studio. Unique designs for your interior."
 
   return {

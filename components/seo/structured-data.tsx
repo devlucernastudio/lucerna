@@ -11,9 +11,10 @@ interface ProductStructuredDataProps {
     is_in_stock?: boolean
   }
   locale: string
+  isAvailable: boolean
 }
 
-export function ProductStructuredData({ product, locale }: ProductStructuredDataProps) {
+export function ProductStructuredData({ product, locale, isAvailable }: ProductStructuredDataProps) {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lucerna-studio.com'
   const name = locale === 'uk' ? product.name_uk : product.name_en
   const description = locale === 'uk' ? product.description_uk : product.description_en
@@ -48,7 +49,7 @@ export function ProductStructuredData({ product, locale }: ProductStructuredData
       '@type': 'Offer',
       price: product.price,
       priceCurrency: 'UAH',
-      availability: product.is_in_stock 
+      availability: isAvailable 
         ? 'https://schema.org/InStock' 
         : 'https://schema.org/OutOfStock',
       url: `${baseUrl}/${locale}/product/${product.slug}`,

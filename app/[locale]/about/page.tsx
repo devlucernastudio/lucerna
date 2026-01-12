@@ -16,7 +16,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
     : "About Us - Lucerna Studio"
   
   const description = locale === "uk"
-    ? "Дізнайтеся більше про Lucerna Studio та наші унікальні світильники ручної роботи. Наша історія та філософія."
+    ? "Дізнайтеся більше про Lucerna Studio | Люцерна Студіо та наші унікальні світильники ручної роботи. Наша історія та філософія."
     : "Learn more about Lucerna Studio and our unique handmade lamps. Our story and philosophy."
 
   return {

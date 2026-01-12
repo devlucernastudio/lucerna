@@ -116,7 +116,7 @@ export function ProductGallery({ images, productName, isAvailable = true }: Prod
             sizes="(max-width: 768px) 100vw, 50vw"
             quality={85}
             className={`object-cover transition-opacity ${!isAvailable ? "opacity-50 grayscale" : ""}`}
-            priority
+            priority={mainImageIndex === 0}
           />
         </button>
 
@@ -264,7 +264,6 @@ export function ProductGallery({ images, productName, isAvailable = true }: Prod
                   sizes="95vw"
                   quality={90}
                   className="max-w-full max-h-full w-auto h-auto object-contain"
-                  priority
                 />
               </div>
             </div>

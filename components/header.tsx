@@ -104,6 +104,7 @@ export function Header() {
             variant="ghost"
             className="h-full"
             onClick={() => setMobileMenuOpen(true)}
+            aria-label={t("nav.title")}
           >
             <Menu style={{height: 22, width: 22}} className="h-5 w-5" />
           </Button>
@@ -120,7 +121,7 @@ export function Header() {
         <div className="hidden md:flex ml-auto items-center gap-4">
           <LanguageSwitcher />
           <Button variant="ghost" size="sm" asChild>
-            <LocaleLink href="/cart" className="relative btn-feedback">
+            <LocaleLink href="/cart" className="relative btn-feedback" aria-label={t("cart.title")}>
               <ShoppingCart style={{height: 22, width: 22}} className="h-5 w-5" />
               {totalItems > 0 && (
                 <span className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-[#D4834F] text-xs font-medium text-white">
@@ -134,7 +135,7 @@ export function Header() {
         {/* Mobile: Cart button on right */}
         <div className="md:hidden">
           <Button variant="ghost" size="sm" asChild>
-            <LocaleLink href="/cart" className="relative btn-feedback">
+            <LocaleLink href="/cart" className="relative btn-feedback" aria-label={t("cart.title")}>
               <ShoppingCart style={{height: 22, width: 22}} className="h-5 w-5" />
               {totalItems > 0 && (
                 <span className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-[#D4834F] text-xs font-medium text-white">

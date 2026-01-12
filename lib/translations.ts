@@ -1,6 +1,7 @@
 export const translations = {
   uk: {
     nav: {
+      title: "Меню",
       home: "Головна",
       catalog: "Каталог",
       about: "Про нас",
@@ -93,6 +94,7 @@ export const translations = {
   },
   en: {
     nav: {
+      title: "Menu",
       home: "Home",
       catalog: "Catalog",
       about: "About",
