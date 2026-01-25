@@ -23,7 +23,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   }
   
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://lucerna-studio.com"
-  const url = `${baseUrl}/${locale}/blog/${slug}`
+  const url = `${baseUrl}/${locale}/blog/${encodeURIComponent(slug)}`
   const title = `${post.title_uk || post.title_en} - Lucerna Studio Blog`
   const description = post.excerpt_uk || post.excerpt_en || ""
   const image = post.cover_image ? `${baseUrl}${post.cover_image}` : `${baseUrl}/og-image.jpg`
@@ -34,8 +34,9 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
     alternates: {
       canonical: url,
       languages: {
-        'uk-UA': `${baseUrl}/uk/blog/${slug}`,
-        'en-US': `${baseUrl}/en/blog/${slug}`,
+        'uk-UA': `${baseUrl}/uk/blog/${encodeURIComponent(slug)}`,
+        'en-US': `${baseUrl}/en/blog/${encodeURIComponent(slug)}`,
+        'x-default': `${baseUrl}/uk/blog/${encodeURIComponent(slug)}`,
       },
     },
     openGraph: {

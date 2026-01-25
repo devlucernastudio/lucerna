@@ -142,13 +142,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   
   const productPages = (products || []).flatMap(product => [
     {
-      url: `${baseUrl}/uk/product/${product.slug}`,
+      url: `${baseUrl}/uk/product/${encodeURIComponent(product.slug)}`,
       lastModified: product.updated_at ? new Date(product.updated_at) : new Date(),
       changeFrequency: 'weekly' as const,
       priority: 0.8,
     },
     {
-      url: `${baseUrl}/en/product/${product.slug}`,
+      url: `${baseUrl}/en/product/${encodeURIComponent(product.slug)}`,
       lastModified: product.updated_at ? new Date(product.updated_at) : new Date(),
       changeFrequency: 'weekly' as const,
       priority: 0.8,

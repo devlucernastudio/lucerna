@@ -23,6 +23,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
       languages: {
         'uk-UA': `${baseUrl}/uk/returns`,
         'en-US': `${baseUrl}/en/returns`,
+        'x-default': `${baseUrl}/uk/returns`,
       },
     },
     robots: {

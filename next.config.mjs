@@ -16,12 +16,9 @@ const nextConfig = {
       },
     ],
   },
-  async rewrites() {
+  async redirects() {
     return [
-      {
-        source: '/',
-        destination: '/uk',
-      },
+      { source: '/', destination: '/uk', permanent: true },
     ]
   },
 }

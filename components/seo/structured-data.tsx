@@ -17,46 +17,69 @@ interface ProductStructuredDataProps {
 export function ProductStructuredData({ product, locale, isAvailable }: ProductStructuredDataProps) {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lucerna-studio.com'
   const name = locale === 'uk' ? product.name_uk : product.name_en
-  const description = locale === 'uk' ? product.description_uk : product.description_en
+  const rawDescription = locale === 'uk' ? product.description_uk : product.description_en
   
-  // Strip HTML tags from description
-  const cleanDescription = description
-    ? description.replace(/<[^>]*>/g, '').substring(0, 500)
+  // Strip HTML tags from description; не залишати порожнім (вимога Google для Merchant listing)
+  const cleanDescription = rawDescription
+    ? rawDescription.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim().substring(0, 500)
     : ''
+  const description = cleanDescription || name || (locale === 'uk'
+    ? 'Унікальний світильник ручної роботи від Lucerna Studio.'
+    : 'Unique handmade lamp from Lucerna Studio.')
   
   // Get first image URL
   let imageUrl = ''
   if (product.images && product.images.length > 0) {
     const firstImage = product.images[0]
     imageUrl = typeof firstImage === 'string' ? firstImage : firstImage.url
-    // Ensure absolute URL
     if (imageUrl && !imageUrl.startsWith('http')) {
       imageUrl = `${baseUrl}${imageUrl}`
     }
   }
-  
+
+  // priceValidUntil: щонайменше 30 днів (рекомендація Google). Ставимо 1 рік.
+  const priceValidUntil = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+
+  const productUrl = `${baseUrl}/${locale}/product/${encodeURIComponent(product.slug)}`
+
+  const offers: Record<string, unknown> = {
+    '@type': 'Offer',
+    price: product.price,
+    priceCurrency: 'UAH',
+    priceValidUntil,
+    availability: isAvailable ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+    url: productUrl,
+    // shippingDetails — вимога для «Пропозиції від продавців»
+    shippingDetails: {
+      '@type': 'OfferShippingDetails',
+      deliveryTime: {
+        '@type': 'ShippingDeliveryTime',
+        handlingTime: { '@type': 'QuantitativeValue', minValue: 0, maxValue: 28, unitCode: 'd' },
+        transitTime: { '@type': 'QuantitativeValue', minValue: 1, maxValue: 14, unitCode: 'd' },
+      },
+      shippingDestination: { '@type': 'DefinedRegion', addressCountry: 'UA' },
+    },
+    // hasMerchantReturnPolicy — вимога для «Пропозиції від продавців» (20 днів, повернення за рахунок покупця)
+    hasMerchantReturnPolicy: {
+      '@type': 'MerchantReturnPolicy',
+      returnPolicyCategory: 'https://schema.org/MerchantReturnFiniteReturnWindow',
+      applicableCountry: 'UA',
+      merchantReturnDays: 20,
+      merchantReturnLink: `${baseUrl}/${locale}/returns`,
+    },
+  }
+
   const structuredData = {
     '@context': 'https://schema.org',
     '@type': 'Product',
     name,
-    description: cleanDescription,
+    description,
     image: imageUrl || `${baseUrl}/og-image.jpg`,
-    brand: {
-      '@type': 'Brand',
-      name: 'Lucerna Studio',
-    },
-    offers: {
-      '@type': 'Offer',
-      price: product.price,
-      priceCurrency: 'UAH',
-      availability: isAvailable 
-        ? 'https://schema.org/InStock' 
-        : 'https://schema.org/OutOfStock',
-      url: `${baseUrl}/${locale}/product/${product.slug}`,
-    },
-    url: `${baseUrl}/${locale}/product/${product.slug}`,
+    brand: { '@type': 'Brand', name: 'Lucerna Studio' },
+    offers,
+    url: productUrl,
   }
-  
+
   return (
     <script
       type="application/ld+json"
