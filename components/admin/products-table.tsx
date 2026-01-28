@@ -62,16 +62,24 @@ interface CharacteristicType {
   name_en: string
 }
 
+interface DownloadableFile {
+  id: string
+  title_uk: string
+  title_en: string
+}
+
 export function ProductsTable({ 
   products, 
   categories,
   characteristicOptions = [],
-  characteristicTypes = []
+  characteristicTypes = [],
+  downloadableFiles = []
 }: { 
   products: Product[]
   categories: Category[]
   characteristicOptions?: CharacteristicOption[]
   characteristicTypes?: CharacteristicType[]
+  downloadableFiles?: DownloadableFile[]
 }) {
   const router = useRouter()
   const [viewMode, setViewMode] = useState<"standard" | "extended">("standard")
@@ -139,6 +147,7 @@ export function ProductsTable({
           categories={categories}
           characteristicOptions={characteristicOptions}
           characteristicTypes={characteristicTypes}
+          downloadableFiles={downloadableFiles}
         />
       </div>
     )

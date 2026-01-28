@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Bold, List, ListOrdered } from "lucide-react"
 
 interface SimpleHtmlEditorProps {
-  value: string
+  value: string | null | undefined
   onChange: (value: string) => void
   id?: string
   rows?: number
@@ -21,6 +21,8 @@ export function SimpleHtmlEditor({
   placeholder,
   className,
 }: SimpleHtmlEditorProps) {
+  // Ensure value is always a string, never null or undefined
+  const safeValue = value ?? ""
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   const executeCommand = (command: string, value?: string) => {
@@ -30,8 +32,8 @@ export function SimpleHtmlEditor({
     const start = textarea.selectionStart
     const end = textarea.selectionEnd
     const selectedText = value || textarea.value.substring(start, end)
-    const before = textarea.value.substring(0, start)
-    const after = textarea.value.substring(end)
+    const before = (textarea.value || "").substring(0, start)
+    const after = (textarea.value || "").substring(end)
 
     let newText = ""
     let newCursorPos = start
@@ -154,7 +156,7 @@ export function SimpleHtmlEditor({
       <textarea
         ref={textareaRef}
         id={id}
-        value={value}
+        value={safeValue}
         onChange={(e) => onChange(e.target.value)}
         rows={rows}
         placeholder={placeholder}

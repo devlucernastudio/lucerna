@@ -128,6 +128,11 @@ export default async function AdminProductsPage() {
     .from("characteristic_types")
     .select("id, name_uk, name_en")
 
+  // Fetch all downloadable files for displaying names
+  const { data: downloadableFiles } = await supabase
+    .from("downloadable_files")
+    .select("id, title_uk, title_en")
+
   // Fetch detailed price combinations with characteristics and price
   const { data: detailedPriceCombinations } = productIds.length > 0
     ? await supabase
@@ -155,11 +160,35 @@ export default async function AdminProductsPage() {
     })
   })
 
-  // Add characteristics and detailed price combinations to products
+  // Fetch downloadable files for all products
+  const { data: productDownloadableFiles } = productIds.length > 0
+    ? await supabase
+        .from("product_downloadable_files")
+        .select("product_id, downloadable_file_id, show_file")
+        .in("product_id", productIds)
+    : { data: [] }
+
+  // Group downloadable files by product_id
+  const downloadableFilesByProduct: Record<string, Array<{ 
+    downloadable_file_id: string
+    show_file: boolean
+  }>> = {}
+  productDownloadableFiles?.forEach((pdf: any) => {
+    if (!downloadableFilesByProduct[pdf.product_id]) {
+      downloadableFilesByProduct[pdf.product_id] = []
+    }
+    downloadableFilesByProduct[pdf.product_id].push({
+      downloadable_file_id: pdf.downloadable_file_id,
+      show_file: pdf.show_file ?? true,
+    })
+  })
+
+  // Add characteristics, detailed price combinations, and downloadable files to products
   const productsWithAllData = productsWithCategories.map((product) => ({
     ...product,
     characteristics: characteristicsByProduct[product.id] || [],
     detailedPriceCombinations: detailedPriceCombinationsByProduct[product.id] || [],
+    downloadableFiles: downloadableFilesByProduct[product.id] || [],
   }))
 
   return (
@@ -179,6 +208,7 @@ export default async function AdminProductsPage() {
           categories={categories || []}
           characteristicOptions={characteristicOptions || []}
           characteristicTypes={characteristicTypes || []}
+          downloadableFiles={downloadableFiles || []}
         />
     </main>
   )

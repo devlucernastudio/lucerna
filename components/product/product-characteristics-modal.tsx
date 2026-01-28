@@ -74,6 +74,8 @@ interface ProductCharacteristicsModalProps {
     name_en: string
     slug: string
     price: number
+    description_uk?: string | null
+    description_en?: string | null
     images?: string[] | Array<{ url: string; id?: string }>
   }
   productCharacteristics: ProductCharacteristic[]
@@ -566,7 +568,7 @@ export function ProductCharacteristicsModal({
                       {/* Text type - show only name and value in label */}
                       {charType.input_type === "text" ? (
                         <Label className="text-sm font-medium gap-0 flex items-center">
-                          {charType.name_uk}: <span className="text-[#D4834F] font-normal ml-1">{textValues[pc.characteristic_type_id] || "—"}</span>
+                          {charType.name_uk}: <span className="text-[#D4834F] font-normal ml-1 text-glow-orange">{textValues[pc.characteristic_type_id] || "—"}</span>
                         </Label>
                       ) : (
                         <>
@@ -604,7 +606,7 @@ export function ProductCharacteristicsModal({
                                     <>
                                       <span>:</span>
                                       {isRequired && <span className="text-red-500">*</span>}
-                                      <span className="text-[#D4834F] font-normal ml-1"> {selectedDisplay.text}</span>
+                                      <span className="text-[#D4834F] font-normal ml-1 text-glow-orange"> {selectedDisplay.text}</span>
                                     </>
                                   ) : (
                                     <>
@@ -792,6 +794,20 @@ export function ProductCharacteristicsModal({
                 />
               </div>
             </>
+          )}
+          {/* Product Description */}
+          {(product.description_uk || product.description_en) && (
+            <div className="border-t border-border pt-4">
+              <h3 className="text-sm font-semibold mb-2">{t("product.description")}</h3>
+              <div 
+                className="text-sm text-muted-foreground prose prose-sm max-w-none"
+                dangerouslySetInnerHTML={{ 
+                  __html: locale === "uk" 
+                    ? (product.description_uk || product.description_en || "") 
+                    : (product.description_en || product.description_uk || "")
+                }}
+              />
+            </div>
           )}
         </div>
 

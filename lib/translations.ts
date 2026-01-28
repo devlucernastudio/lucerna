@@ -36,6 +36,7 @@ export const translations = {
       productAddedToCart: "Товар додано до кошика",
       cancel: "Скасувати",
       from: "від",
+      download3DModels: "Завантажити 3Д моделі",
     },
     cart: {
       title: "Кошик",
@@ -129,6 +130,7 @@ export const translations = {
       productAddedToCart: "Product added to cart",
       cancel: "Cancel",
       from: "from",
+      download3DModels: "Download 3D Models",
     },
     cart: {
       title: "Shopping Cart",

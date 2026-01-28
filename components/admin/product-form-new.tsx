@@ -38,6 +38,12 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 interface Product {
   id: string
@@ -55,6 +61,10 @@ interface Product {
   images: string[]
   is_featured: boolean
   is_active: boolean
+  seo_title_uk?: string | null
+  seo_title_en?: string | null
+  meta_description_uk?: string | null
+  meta_description_en?: string | null
 }
 
 interface Category {
@@ -105,6 +115,21 @@ interface PriceCombination {
   stock?: number | null
 }
 
+interface DownloadableFile {
+  id: string
+  title_uk: string
+  title_en: string
+  description_uk: string | null
+  description_en: string | null
+  link: string
+}
+
+interface ProductDownloadableFile {
+  id: string
+  downloadable_file_id: string
+  show_file: boolean
+}
+
 export function ProductFormNew({ 
   product, 
   categories,
@@ -112,7 +137,9 @@ export function ProductFormNew({
   characteristicTypes = [],
   productCharacteristics = [],
   characteristicOptions = [],
-  priceCombinations = []
+  priceCombinations = [],
+  downloadableFiles = [],
+  productDownloadableFiles = []
 }: { 
   product?: Product
   categories: Category[]
@@ -121,6 +148,8 @@ export function ProductFormNew({
   productCharacteristics?: any[]
   characteristicOptions?: CharacteristicOption[]
   priceCombinations?: any[]
+  downloadableFiles?: DownloadableFile[]
+  productDownloadableFiles?: ProductDownloadableFile[]
 }) {
   const router = useRouter()
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -191,6 +220,16 @@ export function ProductFormNew({
   })
   const [newCharOptions, setNewCharOptions] = useState<Array<{name_uk?: string, name_en?: string, value?: string, color_code?: string}>>([])
   const [creatingChar, setCreatingChar] = useState(false)
+  
+  // Downloadable files state
+  const [availableFiles, setAvailableFiles] = useState<DownloadableFile[]>(downloadableFiles || [])
+  const [selectedFiles, setSelectedFiles] = useState<Record<string, boolean>>(() => {
+    const initial: Record<string, boolean> = {}
+    productDownloadableFiles.forEach(pdf => {
+      initial[pdf.downloadable_file_id] = pdf.show_file
+    })
+    return initial
+  })
 
   const initialFormData = {
     name_uk: product?.name_uk || "",
@@ -206,9 +245,16 @@ export function ProductFormNew({
     images: product?.images || [],
     is_featured: product?.is_featured || false,
     is_active: product?.is_active ?? true,
+    seo_title_uk: (product as any)?.seo_title_uk || "",
+    seo_title_en: (product as any)?.seo_title_en || "",
+    meta_description_uk: (product as any)?.meta_description_uk || "",
+    meta_description_en: (product as any)?.meta_description_en || "",
   }
 
   const [formData, setFormData] = useState(initialFormData)
+  
+  // Keep initialFormData reference for comparison (mutable) - updated when basic info is saved
+  const initialFormDataRef = useRef({ ...initialFormData })
 
   // Create a stable reference for current form state
   const getCurrentStateString = () => {
@@ -218,12 +264,31 @@ export function ProductFormNew({
       selectedCategories,
       productChars,
       priceCombs,
+      selectedFiles,
     })
   }
+
+  // Load downloadable files on mount
+  useEffect(() => {
+    const loadFiles = async () => {
+      const supabase = createClient()
+      const { data } = await supabase
+        .from("downloadable_files")
+        .select("*")
+        .order("created_at", { ascending: false })
+      
+      if (data) {
+        setAvailableFiles(data)
+      }
+    }
+    loadFiles()
+  }, [])
 
   // Initialize last saved state when product loads
   useEffect(() => {
     if (product) {
+      // Update initialFormDataRef with current formData values
+      initialFormDataRef.current = { ...formData }
       lastSaveStateRef.current = getCurrentStateString()
       // Initialize saved price combinations state
       const initialPriceCombsString = JSON.stringify([...(priceCombinations || [])].map((pc: any) => ({
@@ -259,12 +324,104 @@ export function ProductFormNew({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [JSON.stringify(priceCombs.map(c => c.is_available)), useStockQuantity])
 
-  // Auto-save function
-  const autoSave = async () => {
+  // Save only basic info block
+  const saveBasicInfo = async () => {
     if (!product || isSaving || isSubmitting) return
 
     // Basic validation
-    if (!formData.name_uk.trim() || !formData.name_en.trim() || !formData.slug.trim() || formData.price <= 0) {
+    if (!formData.name_uk.trim() || !formData.name_en.trim() || !formData.slug.trim()) {
+      showToast.error("Заповніть обов'язкові поля")
+      return
+    }
+
+    setIsSaving(true)
+    const supabase = createClient()
+
+    try {
+      const productData: any = {
+        name_uk: formData.name_uk.trim(),
+        name_en: formData.name_en.trim(),
+        slug: formData.slug.trim(),
+        description_uk: formData.description_uk || null,
+        description_en: formData.description_en || null,
+        seo_title_uk: formData.seo_title_uk?.trim() || null,
+        seo_title_en: formData.seo_title_en?.trim() || null,
+        meta_description_uk: formData.meta_description_uk?.trim() || null,
+        meta_description_en: formData.meta_description_en?.trim() || null,
+      }
+
+      // Update product
+      const { error: productError } = await supabase
+        .from("products")
+        .update(productData)
+        .eq("id", product.id)
+
+      if (productError) throw productError
+
+      // Update initialFormData to reflect saved state
+      setFormData(prev => ({
+        ...prev,
+        name_uk: productData.name_uk,
+        name_en: productData.name_en,
+        slug: productData.slug,
+        description_uk: productData.description_uk,
+        description_en: productData.description_en,
+        seo_title_uk: productData.seo_title_uk,
+        seo_title_en: productData.seo_title_en,
+        meta_description_uk: productData.meta_description_uk,
+        meta_description_en: productData.meta_description_en,
+      }))
+      
+      // Update formData to ensure no null values - convert all to empty strings
+      setFormData(prev => ({
+        ...prev,
+        name_uk: productData.name_uk || "",
+        name_en: productData.name_en || "",
+        slug: productData.slug || "",
+        description_uk: productData.description_uk || "",
+        description_en: productData.description_en || "",
+        seo_title_uk: productData.seo_title_uk || "",
+        seo_title_en: productData.seo_title_en || "",
+        meta_description_uk: productData.meta_description_uk || "",
+        meta_description_en: productData.meta_description_en || "",
+      }))
+      
+      // Update initialFormData ref
+      initialFormDataRef.current.name_uk = productData.name_uk
+      initialFormDataRef.current.name_en = productData.name_en
+      initialFormDataRef.current.slug = productData.slug
+      initialFormDataRef.current.description_uk = productData.description_uk || ""
+      initialFormDataRef.current.description_en = productData.description_en || ""
+      initialFormDataRef.current.seo_title_uk = productData.seo_title_uk || ""
+      initialFormDataRef.current.seo_title_en = productData.seo_title_en || ""
+      initialFormDataRef.current.meta_description_uk = productData.meta_description_uk || ""
+      initialFormDataRef.current.meta_description_en = productData.meta_description_en || ""
+      
+      // Update last saved state
+      lastSaveStateRef.current = getCurrentStateString()
+      
+      showToast.success("Основну інформацію збережено")
+      router.refresh()
+    } catch (error) {
+      console.error('Error saving basic info:', error)
+      const errorMessage = error instanceof Error ? error.message : "Помилка при збереженні"
+      showToast.error(`Помилка: ${errorMessage}`)
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  // Auto-save function (excludes basic info block - saved via saveBasicInfo button)
+  const autoSave = async () => {
+    if (!product || isSaving || isSubmitting) return
+
+    // Skip if only basic block has changes
+    if (changedBlocks.size === 1 && changedBlocks.has("basic")) {
+      return
+    }
+
+    // Basic validation (only for fields that auto-save)
+    if (formData.price <= 0) {
       return
     }
 
@@ -279,11 +436,7 @@ export function ProductFormNew({
 
     try {
       const productData: any = {
-        name_uk: formData.name_uk.trim(),
-        name_en: formData.name_en.trim(),
-        slug: formData.slug.trim(),
-        description_uk: formData.description_uk || null,
-        description_en: formData.description_en || null,
+        // Exclude basic info fields - they are saved separately via saveBasicInfo button
         price: Number(formData.price),
         compare_at_price: formData.compare_at_price ? Number(formData.compare_at_price) : null,
         stock: useStockQuantity ? Number(formData.stock) : null,
@@ -404,6 +557,44 @@ export function ProductFormNew({
         }
       }
 
+      // Update downloadable files
+      try {
+        const { error: deleteFilesError } = await supabase
+          .from("product_downloadable_files")
+          .delete()
+          .eq("product_id", product.id)
+        
+        if (deleteFilesError && deleteFilesError.code !== "PGRST205" && !deleteFilesError.message?.includes("Could not find the table")) {
+          console.error('Error deleting downloadable files:', deleteFilesError)
+          throw deleteFilesError
+        }
+        
+        const filesToInsert = Object.entries(selectedFiles)
+          .filter(([_, show]) => show !== undefined)
+          .map(([fileId, showFile]) => ({
+            product_id: product.id,
+            downloadable_file_id: fileId,
+            show_file: showFile,
+          }))
+        
+        if (filesToInsert.length > 0) {
+          const { error: insertFilesError } = await supabase
+            .from("product_downloadable_files")
+            .insert(filesToInsert)
+          
+          if (insertFilesError && insertFilesError.code !== "PGRST205" && !insertFilesError.message?.includes("Could not find the table")) {
+            console.error('Error inserting downloadable files:', insertFilesError)
+            throw insertFilesError
+          }
+        }
+      } catch (error: any) {
+        if (error?.code === "PGRST205" || error?.message?.includes("Could not find the table")) {
+          console.warn('product_downloadable_files table does not exist, skipping file updates')
+        } else {
+          throw error
+        }
+      }
+
       // Update last saved state AFTER successful save
       lastSaveStateRef.current = getCurrentStateString()
       
@@ -447,11 +638,15 @@ export function ProductFormNew({
 
     // Check basic info block
     if (
-      formData.name_uk !== initialFormData.name_uk ||
-      formData.name_en !== initialFormData.name_en ||
-      formData.slug !== initialFormData.slug ||
-      formData.description_uk !== initialFormData.description_uk ||
-      formData.description_en !== initialFormData.description_en
+      formData.name_uk !== initialFormDataRef.current.name_uk ||
+      formData.name_en !== initialFormDataRef.current.name_en ||
+      formData.slug !== initialFormDataRef.current.slug ||
+      formData.description_uk !== initialFormDataRef.current.description_uk ||
+      formData.description_en !== initialFormDataRef.current.description_en ||
+      formData.seo_title_uk !== initialFormDataRef.current.seo_title_uk ||
+      formData.seo_title_en !== initialFormDataRef.current.seo_title_en ||
+      formData.meta_description_uk !== initialFormDataRef.current.meta_description_uk ||
+      formData.meta_description_en !== initialFormDataRef.current.meta_description_en
     ) {
       blocks.add("basic")
     }
@@ -549,6 +744,17 @@ export function ProductFormNew({
           }
         }
 
+    // Check downloadable files block
+    const initialFilesMap: Record<string, boolean> = {}
+    productDownloadableFiles.forEach(pdf => {
+      initialFilesMap[pdf.downloadable_file_id] = pdf.show_file
+    })
+    const currentFilesString = JSON.stringify(selectedFiles)
+    const initialFilesString = JSON.stringify(initialFilesMap)
+    if (currentFilesString !== initialFilesString) {
+      blocks.add("files")
+    }
+
     // Check settings block
     if (
       formData.is_featured !== initialFormData.is_featured ||
@@ -565,6 +771,10 @@ export function ProductFormNew({
     formData.slug,
     formData.description_uk,
     formData.description_en,
+    formData.seo_title_uk,
+    formData.seo_title_en,
+    formData.meta_description_uk,
+    formData.meta_description_en,
     formData.price,
     formData.compare_at_price,
     formData.stock,
@@ -576,11 +786,15 @@ export function ProductFormNew({
     JSON.stringify(selectedCategories),
     JSON.stringify(productChars),
     JSON.stringify(priceCombs),
-    initialFormData.name_uk,
-    initialFormData.name_en,
-    initialFormData.slug,
-    initialFormData.description_uk,
-    initialFormData.description_en,
+    initialFormDataRef.current.name_uk,
+    initialFormDataRef.current.name_en,
+    initialFormDataRef.current.slug,
+    initialFormDataRef.current.description_uk,
+    initialFormDataRef.current.description_en,
+    initialFormDataRef.current.seo_title_uk,
+    initialFormDataRef.current.seo_title_en,
+    initialFormDataRef.current.meta_description_uk,
+    initialFormDataRef.current.meta_description_en,
     initialFormData.price,
     initialFormData.compare_at_price,
     initialFormData.stock,
@@ -592,11 +806,18 @@ export function ProductFormNew({
     JSON.stringify(productCategories),
     JSON.stringify(productCharacteristics),
     JSON.stringify(priceCombinations),
+    JSON.stringify(selectedFiles),
+    JSON.stringify(productDownloadableFiles),
   ])
 
-  // Auto-save on changes with debounce
+  // Auto-save on changes with debounce (excluding basic info block)
   useEffect(() => {
     if (!product || isSaving || changedBlocks.size === 0) return // Only auto-save for existing products with changes
+    
+    // Skip auto-save if only basic block has changes
+    if (changedBlocks.size === 1 && changedBlocks.has("basic")) {
+      return
+    }
 
     // Clear existing timeout
     if (saveTimeoutRef.current) {
@@ -614,7 +835,7 @@ export function ProductFormNew({
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [formData.name_uk, formData.name_en, formData.slug, formData.price, formData.description_uk, formData.description_en, formData.compare_at_price, formData.stock, formData.is_in_stock, formData.sku, formData.is_featured, formData.is_active, useStockQuantity, JSON.stringify(imageUrls), JSON.stringify(selectedCategories), JSON.stringify(productChars), JSON.stringify(priceCombs), changedBlocks.size])
+  }, [formData.price, formData.compare_at_price, formData.stock, formData.is_in_stock, formData.sku, formData.is_featured, formData.is_active, useStockQuantity, JSON.stringify(imageUrls), JSON.stringify(selectedCategories), JSON.stringify(productChars), JSON.stringify(priceCombs), JSON.stringify(selectedFiles), changedBlocks.size])
 
   // No warnings - changes save automatically
 
@@ -940,6 +1161,10 @@ export function ProductFormNew({
         images: imageUrls,
         is_featured: formData.is_featured,
         is_active: formData.is_active,
+        seo_title_uk: formData.seo_title_uk?.trim() || null,
+        seo_title_en: formData.seo_title_en?.trim() || null,
+        meta_description_uk: formData.meta_description_uk?.trim() || null,
+        meta_description_en: formData.meta_description_en?.trim() || null,
       }
 
       const { error, data } = await supabase
@@ -986,6 +1211,26 @@ export function ProductFormNew({
         if (insertPriceCombsError) {
           console.error('Error inserting price combinations:', insertPriceCombsError)
           throw insertPriceCombsError
+        }
+      }
+
+      // Update downloadable files
+      const filesToInsert = Object.entries(selectedFiles)
+        .filter(([_, show]) => show !== undefined && show === true)
+        .map(([fileId, showFile]) => ({
+          product_id: productId,
+          downloadable_file_id: fileId,
+          show_file: showFile,
+        }))
+      
+      if (filesToInsert.length > 0) {
+        const { error: insertFilesError } = await supabase
+          .from("product_downloadable_files")
+          .insert(filesToInsert)
+        
+        if (insertFilesError && insertFilesError.code !== "PGRST205" && !insertFilesError.message?.includes("Could not find the table")) {
+          console.error('Error inserting downloadable files:', insertFilesError)
+          throw insertFilesError
         }
       }
 
@@ -1054,12 +1299,22 @@ export function ProductFormNew({
         <CardHeader>
           <div className="flex items-center justify-between min-h-[1.5rem]">
             <CardTitle>Основна інформація</CardTitle>
-            <div className="min-w-[120px] text-right min-h-[1.5rem] flex items-center justify-end">
-              {changedBlocks.has("basic") && (
+            <div className="min-w-[120px] text-right min-h-[1.5rem] flex items-center justify-end gap-2">
+              {isSaving && changedBlocks.has("basic") ? (
                 <div className="flex items-center gap-2 text-sm text-[#D4834F]">
                   <Loader2 className="h-4 w-4 animate-spin" />
                   <span>Збереження...</span>
                 </div>
+              ) : (
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={saveBasicInfo}
+                  disabled={!changedBlocks.has("basic") || isSaving || !product}
+                  className="bg-[#D4834F] hover:bg-[#C17340] h-8 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Зберегти
+                </Button>
               )}
             </div>
           </div>
@@ -1070,7 +1325,7 @@ export function ProductFormNew({
               <Label htmlFor="name_uk">Назва (Українська)*</Label>
               <Input
                 id="name_uk"
-                value={formData.name_uk}
+                value={formData.name_uk || ""}
                 onChange={(e) => {
                   const value = e.target.value
                   setFormData({ ...formData, name_uk: value })
@@ -1089,7 +1344,7 @@ export function ProductFormNew({
               <Label htmlFor="name_en">Назва (English)*</Label>
               <Input
                 id="name_en"
-                value={formData.name_en}
+                value={formData.name_en || ""}
                 onChange={(e) => setFormData({ ...formData, name_en: e.target.value })}
                 className={hasFieldError("name_en") ? "border-red-500" : ""}
               />
@@ -1103,7 +1358,7 @@ export function ProductFormNew({
             <Label htmlFor="slug">Slug (URL)*</Label>
             <Input
               id="slug"
-              value={formData.slug}
+              value={formData.slug || ""}
               onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
               placeholder="product-name"
               className={hasFieldError("slug") ? "border-red-500" : ""}
@@ -1118,7 +1373,7 @@ export function ProductFormNew({
               <Label htmlFor="description_uk">Опис (Українська)</Label>
               <SimpleHtmlEditor
                 id="description_uk"
-                value={formData.description_uk}
+                value={formData.description_uk || ""}
                 onChange={(value) => setFormData({ ...formData, description_uk: value })}
                 rows={6}
               />
@@ -1128,9 +1383,60 @@ export function ProductFormNew({
               <Label htmlFor="description_en">Опис (English)</Label>
               <SimpleHtmlEditor
                 id="description_en"
-                value={formData.description_en}
+                value={formData.description_en || ""}
                 onChange={(value) => setFormData({ ...formData, description_en: value })}
                 rows={6}
+              />
+            </div>
+          </div>
+
+          {/* SEO Fields */}
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="seo_title_uk">SEO Заголовок (Українська)</Label>
+              <Input
+                id="seo_title_uk"
+                value={formData.seo_title_uk || ""}
+                onChange={(e) => setFormData({ ...formData, seo_title_uk: e.target.value })}
+                placeholder="SEO заголовок для пошукових систем"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="seo_title_en">SEO Title (English)</Label>
+              <Input
+                id="seo_title_en"
+                value={formData.seo_title_en || ""}
+                onChange={(e) => setFormData({ ...formData, seo_title_en: e.target.value })}
+                placeholder="SEO title for search engines"
+              />
+            </div>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="meta_description_uk">Мета-опис (Українська)</Label>
+              <Textarea
+                id="meta_description_uk"
+                value={formData.meta_description_uk || ""}
+                onChange={(e) => setFormData({ ...formData, meta_description_uk: e.target.value })}
+                placeholder="Короткий опис для пошукових систем (до 160 символів)"
+                rows={3}
+                className="resize-none"
+                maxLength={160}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="meta_description_en">Meta Description (English)</Label>
+              <Textarea
+                id="meta_description_en"
+                value={formData.meta_description_en || ""}
+                onChange={(e) => setFormData({ ...formData, meta_description_en: e.target.value })}
+                placeholder="Short description for search engines (up to 160 characters)"
+                rows={3}
+                className="resize-none"
+                maxLength={160}
               />
             </div>
           </div>
@@ -1230,7 +1536,7 @@ export function ProductFormNew({
             <Label htmlFor="sku">Артикул (SKU)</Label>
             <Input
               id="sku"
-              value={formData.sku}
+              value={formData.sku || ""}
               onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
             />
           </div>
@@ -1963,6 +2269,117 @@ export function ProductFormNew({
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Downloadable Files */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between min-h-[1.5rem]">
+            <CardTitle>Файли для завантаження</CardTitle>
+            <div className="min-w-[120px] text-right min-h-[1.5rem] flex items-center justify-end">
+              {changedBlocks.has("files") && (
+                <div className="flex items-center gap-2 text-sm text-[#D4834F]">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span>Збереження...</span>
+                </div>
+              )}
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* Selected Files */}
+          {Object.keys(selectedFiles).length > 0 && (
+            <div className="space-y-3">
+              {Object.entries(selectedFiles).map(([fileId, showFile]) => {
+                const file = availableFiles.find(f => f.id === fileId)
+                if (!file) return null
+                return (
+                  <div key={fileId} className="flex items-center justify-between p-3 border rounded-lg bg-muted/50">
+                    <div className="flex-1">
+                      <div className="font-medium">
+                        {file.title_uk || file.title_en}
+                      </div>
+                      {(file.description_uk || file.description_en) && (
+                        <div className="text-sm text-muted-foreground mt-1">
+                          {file.description_uk || file.description_en}
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <Switch
+                        checked={showFile ?? false}
+                        onCheckedChange={(checked) => {
+                          setSelectedFiles({ ...selectedFiles, [fileId]: checked })
+                        }}
+                      />
+                      <Label className="text-sm">
+                        {showFile ? "Показати" : "Приховати"}
+                      </Label>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          const newSelected = { ...selectedFiles }
+                          delete newSelected[fileId]
+                          setSelectedFiles(newSelected)
+                        }}
+                        className="text-destructive hover:text-destructive"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+
+          {/* Add Files Button */}
+          {availableFiles.length > 0 && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button type="button" variant="outline" className="w-full">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Додати файли
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-[var(--radix-dropdown-menu-trigger-width)] max-h-[300px] overflow-y-auto">
+                {availableFiles
+                  .filter(file => !selectedFiles.hasOwnProperty(file.id))
+                  .map((file) => (
+                    <DropdownMenuItem
+                      key={file.id}
+                      onClick={() => {
+                        setSelectedFiles({ ...selectedFiles, [file.id]: true })
+                      }}
+                      className="cursor-pointer"
+                    >
+                      <div className="flex flex-col">
+                        <span className="font-medium">{file.title_uk || file.title_en}</span>
+                        {(file.description_uk || file.description_en) && (
+                          <span className="text-xs text-muted-foreground">
+                            {file.description_uk || file.description_en}
+                          </span>
+                        )}
+                      </div>
+                    </DropdownMenuItem>
+                  ))}
+                {availableFiles.filter(file => !selectedFiles.hasOwnProperty(file.id)).length === 0 && (
+                  <DropdownMenuItem disabled>
+                    Всі файли додані
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+
+          {availableFiles.length === 0 && (
+            <p className="text-sm text-muted-foreground">
+              Немає доступних файлів. Створіть файли в налаштуваннях.
+            </p>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Settings */}
       <Card>

@@ -4,6 +4,7 @@ import { SettingsForm } from "@/components/admin/settings-form"
 import { CategoriesManager } from "@/components/admin/categories-manager"
 import { CharacteristicsManager } from "@/components/admin/characteristics-manager"
 import { ContactSettingsManager } from "@/components/admin/contact-settings-manager"
+import { DownloadableFilesManager } from "@/components/admin/downloadable-files-manager"
 
 export default async function AdminSettingsPage() {
   const supabase = await createClient()
@@ -35,6 +36,8 @@ export default async function AdminSettingsPage() {
       <CategoriesManager />
       
       <CharacteristicsManager />
+      
+      <DownloadableFilesManager />
       
       <SettingsForm contentBlocks={contentBlocks || []} />
     </main>

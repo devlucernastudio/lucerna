@@ -74,6 +74,18 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
     .select("*")
     .eq("product_id", id)
 
+  // Get downloadable files
+  const { data: downloadableFiles } = await supabase
+    .from("downloadable_files")
+    .select("*")
+    .order("created_at", { ascending: false })
+
+  // Get product downloadable files
+  const { data: productDownloadableFiles } = await supabase
+    .from("product_downloadable_files")
+    .select("*")
+    .eq("product_id", id)
+
   return (
     <main className="container mx-auto max-w-4xl p-6">
       <ProductFormNew 
@@ -84,6 +96,8 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
         productCharacteristics={productCharacteristics || []}
         characteristicOptions={characteristicOptions || []}
         priceCombinations={priceCombinations || []}
+        downloadableFiles={downloadableFiles || []}
+        productDownloadableFiles={productDownloadableFiles || []}
       />
     </main>
   )

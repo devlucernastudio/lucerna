@@ -102,7 +102,7 @@ export function HeroSection({ contentBlocks }: { contentBlocks: ContentBlock[] |
         <p className="text-balance text-lg text-white/90 md:text-xl">{subtitle}</p>
         <Button 
           size="lg" 
-          className="bg-[#D4834F] px-8 text-base hover:bg-[#C17340] shadow-[0_1px_3px_0_#000000ad,0_1px_1px_-1px_#00000073]" 
+          className="bg-[#D4834F] text-glow-white px-8 text-base hover:bg-[#C17340] shadow-[0_1px_3px_0_#000000ad,0_1px_1px_-1px_#00000073]" 
           asChild
           aria-label={locale === "uk" ? "Переглянути каталог товарів" : "View product catalog"}
         >

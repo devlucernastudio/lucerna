@@ -45,6 +45,10 @@ interface Product {
     combination: any
     price: number
   }>
+  downloadableFiles?: Array<{
+    downloadable_file_id: string
+    show_file: boolean
+  }>
 }
 
 interface Category {
@@ -67,16 +71,24 @@ interface CharacteristicType {
   name_en: string
 }
 
+interface DownloadableFile {
+  id: string
+  title_uk: string
+  title_en: string
+}
+
 export function ProductsTableExtended({ 
   products, 
   categories,
   characteristicOptions = [],
-  characteristicTypes = []
+  characteristicTypes = [],
+  downloadableFiles = []
 }: { 
   products: Product[]
   categories: Category[]
   characteristicOptions?: CharacteristicOption[]
   characteristicTypes?: CharacteristicType[]
+  downloadableFiles?: DownloadableFile[]
 }) {
   const router = useRouter()
   const [editedProducts, setEditedProducts] = useState<Record<string, Partial<Product>>>({})
@@ -302,6 +314,7 @@ export function ProductsTableExtended({
                 <th className="p-2 md:p-3 text-left text-xs font-medium text-foreground bg-muted/50 min-w-[150px]">Ціна / Слаг</th>
                 <th className="p-2 md:p-3 text-left text-xs font-medium text-foreground bg-muted/50 min-w-[200px]">Наявність</th>
                 <th className="p-2 md:p-3 text-left text-xs font-medium text-foreground bg-muted/50 min-w-[250px]">Характеристики</th>
+                <th className="p-2 md:p-3 text-left text-xs font-medium text-foreground bg-muted/50 min-w-[180px] max-w-[200px]">Файли</th>
                 <th className="p-2 md:p-3 text-left text-xs font-medium text-foreground bg-muted/50 min-w-[100px]">Популярний</th>
                 <th className="p-2 md:p-3 text-left text-xs font-medium text-foreground bg-muted/50 min-w-[100px]">Активний</th>
                 <th className="p-2 md:p-3 text-right text-xs font-medium text-foreground bg-muted/50 min-w-[100px]">Дії</th>
@@ -616,6 +629,50 @@ export function ProductsTableExtended({
                               </div>
                             ))}
                           </>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">—</span>
+                        )}
+                      </div>
+                    </td>
+
+                    {/* Downloadable Files */}
+                    <td className="p-2 md:p-3">
+                      <div className="space-y-2">
+                        {product.downloadableFiles && product.downloadableFiles.length > 0 ? (
+                          product.downloadableFiles.map((file) => {
+                            const fileInfo = downloadableFiles.find(df => df.id === file.downloadable_file_id)
+                            const fileTitle = fileInfo ? (fileInfo.title_uk || fileInfo.title_en) : ""
+                            return (
+                              <div key={file.downloadable_file_id} className="flex items-center gap-2">
+                                <Switch
+                                  checked={file.show_file}
+                                  onCheckedChange={async (checked) => {
+                                    const supabase = createClient()
+                                    const { error } = await supabase
+                                      .from("product_downloadable_files")
+                                      .update({ show_file: checked })
+                                      .eq("product_id", product.id)
+                                      .eq("downloadable_file_id", file.downloadable_file_id)
+                                    
+                                    if (error) {
+                                      showToast.error(`Помилка: ${error.message}`)
+                                    } else {
+                                      showToast.success("Оновлено")
+                                      router.refresh()
+                                    }
+                                  }}
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="scale-75 flex-shrink-0"
+                                />
+                                <Label 
+                                  className="text-xs text-muted-foreground truncate max-w-[120px]" 
+                                  title={fileTitle}
+                                >
+                                  {fileTitle || "—"}
+                                </Label>
+                              </div>
+                            )
+                          })
                         ) : (
                           <span className="text-xs text-muted-foreground">—</span>
                         )}

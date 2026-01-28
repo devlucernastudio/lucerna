@@ -37,12 +37,19 @@ export default async function NewProductPage() {
         .order("position", { ascending: true })
     : { data: null }
 
+  // Get downloadable files
+  const { data: downloadableFiles } = await supabase
+    .from("downloadable_files")
+    .select("*")
+    .order("created_at", { ascending: false })
+
   return (
     <main className="container mx-auto max-w-4xl p-6">
       <ProductFormNew 
         categories={categories || []} 
         characteristicTypes={characteristicTypes || []}
         characteristicOptions={characteristicOptions || []}
+        downloadableFiles={downloadableFiles || []}
       />
     </main>
   )

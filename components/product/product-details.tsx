@@ -11,6 +11,13 @@ import { useI18n } from "@/lib/i18n-context"
 import { getTranslation } from "@/lib/translations"
 import type { CharacteristicInputType } from "@/lib/types/characteristics"
 import { CaparolPaletteModal } from "./caparol-palette-modal"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Download, ChevronDown } from "lucide-react"
 
 interface CharacteristicType {
   id: string
@@ -55,6 +62,15 @@ interface AdditionalInfoBlock {
   }
 }
 
+interface DownloadableFile {
+  id: string
+  title_uk: string
+  title_en: string
+  description_uk: string | null
+  description_en: string | null
+  link: string
+}
+
 interface ProductDetailsProps {
   product: {
     id: string
@@ -75,6 +91,7 @@ interface ProductDetailsProps {
   characteristicOptions: CharacteristicOption[]
   priceCombinations: PriceCombination[]
   additionalInfoBlock?: AdditionalInfoBlock | null
+  downloadableFiles?: DownloadableFile[]
 }
 
 export function ProductDetails({
@@ -84,6 +101,7 @@ export function ProductDetails({
   characteristicOptions,
   priceCombinations,
   additionalInfoBlock,
+  downloadableFiles = [],
 }: ProductDetailsProps) {
   const { addToCart } = useCart()
   const { locale } = useI18n()
@@ -529,9 +547,54 @@ export function ProductDetails({
             </p>
           )}
         </div>
-        {/* Divider after price on mobile */}
-        <div className="lg:hidden border-b border-border mt-4 mb-4"></div>
       </div>
+
+      {/* Downloadable Files */}
+      {downloadableFiles.length > 0 && (
+        <>
+          <div className="border-b border-border"></div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                className="w-full justify-between bg-[#D4834F] hover:bg-[#C17340] text-white border-[#D4834F]"
+              >
+                <div className="flex items-center text-glow-white gap-2">
+                  <Download className="h-4 w-4" />
+                  <span>{t("product.download3DModels")}</span>
+                </div>
+                <ChevronDown className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-[var(--radix-dropdown-menu-trigger-width)]">
+              {downloadableFiles.map((file) => (
+                <DropdownMenuItem
+                  key={file.id}
+                  asChild
+                  className="cursor-pointer"
+                >
+                  <a
+                    href={file.link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex flex-col items-start gap-1 py-2"
+                  >
+                    <span className="font-medium">
+                      {locale === "uk" ? file.title_uk : file.title_en}
+                    </span>
+                    {(file.description_uk || file.description_en) && (
+                      <span className="text-xs text-muted-foreground">
+                        {locale === "uk" ? file.description_uk : file.description_en}
+                      </span>
+                    )}
+                  </a>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <div className="border-b border-border"></div>
+        </>
+      )}
 
       {/* Characteristics */}
       {characteristics.length > 0 && isProductAvailable && (
@@ -557,7 +620,7 @@ export function ProductDetails({
                   {/* Text type - show only name and value in label */}
                   {charType.input_type === "text" ? (
                     <Label className="text-sm font-medium gap-0 flex items-center">
-                      {locale === "uk" ? charType.name_uk : charType.name_en}: <span className="text-[#D4834F] font-normal ml-1">{textValues[pc.characteristic_type_id] || "—"}</span>
+                      {locale === "uk" ? charType.name_uk : charType.name_en}: <span className="text-[#D4834F] font-normal ml-1 text-glow-orange">{textValues[pc.characteristic_type_id] || "—"}</span>
                     </Label>
                   ) : (
                     <>
@@ -595,7 +658,7 @@ export function ProductDetails({
                                 <>
                                   <span>:</span>
                                   {isRequired && <span className="text-red-500">*</span>}
-                                  <span className="text-[#D4834F] font-normal ml-1"> {selectedDisplay.text}</span>
+                                  <span className="text-[#D4834F] font-normal ml-1 text-glow-orange"> {selectedDisplay.text}</span>
                                 </>
                               ) : (
                                 <>

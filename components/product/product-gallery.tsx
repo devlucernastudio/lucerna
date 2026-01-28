@@ -263,7 +263,7 @@ export function ProductGallery({ images, productName, isAvailable = true }: Prod
                   height={1200}
                   sizes="95vw"
                   quality={90}
-                  className="max-w-full max-h-full w-auto h-auto object-contain"
+                  className="max-w-full max-h-full w-full h-auto object-contain"
                 />
               </div>
             </div>

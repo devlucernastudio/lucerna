@@ -93,7 +93,7 @@ export function FeaturedProducts({
         <h2 className="text-3xl font-light text-foreground">{t("home.featured")}</h2>
         <Button
           variant="outline"
-          className="border-[#D4834F] text-[#D4834F] hover:bg-[#D4834F] hover:text-white bg-transparent shadow-[0_1px_3px_0_#00000038,0_1px_1px_-1px_#00000073]"
+          className="border-[#D4834F] text-glow-orange text-[#D4834F] hover:bg-[#D4834F] hover:text-white bg-transparent shadow-[0_1px_3px_0_#00000038,0_1px_1px_-1px_#00000073]"
           asChild
           aria-label={locale === "uk" ? "Дивитись всі товари в каталозі" : "View all products in catalog"}
         >

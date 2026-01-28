@@ -6,6 +6,7 @@ import { BackButton } from "@/components/product/back-button"
 import { RelatedProductsSection } from "@/components/product/related-products-section"
 import { ProductDescription } from "@/components/product/product-description"
 import { ProductStructuredData, BreadcrumbStructuredData } from "@/components/seo/structured-data"
+import { Footer } from "@/components/footer"
 
 export const revalidate = 0 // Disable caching to always show fresh data
 
@@ -27,8 +28,8 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
 
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://lucerna-studio.com"
   const url = `${baseUrl}/${locale}/product/${encodeURIComponent(id)}`
-  const title = `${product.name_uk || product.name_en} - Lucerna Studio`
-  const descriptionRaw = product.description_uk || product.description_en || ""
+  const title = (locale === "uk" ? product.seo_title_uk : product.seo_title_en) || `${product.name_uk || product.name_en} - Lucerna Studio`
+  const descriptionRaw = (locale === "uk" ? product.meta_description_uk : product.meta_description_en) || product.description_uk || product.description_en || ""
   const description = descriptionRaw
     .replace(/<[^>]*>/g, '')
     .replace(/\s+/g, ' ') 
@@ -133,6 +134,17 @@ export default async function ProductPage({ params }: { params: Promise<{ locale
 
   // Pass block to component - let component check if enabled
   const additionalInfoBlock = additionalInfoBlockData || null
+
+  // Fetch downloadable files for this product
+  const { data: productDownloadableFiles } = await supabase
+    .from("product_downloadable_files")
+    .select("*, downloadable_files(*)")
+    .eq("product_id", product.id)
+    .eq("show_file", true)
+
+  const downloadableFiles = productDownloadableFiles
+    ?.map((pdf: any) => pdf.downloadable_files)
+    .filter(Boolean) || []
 
   // Check if product is available
   const isProductAvailable = (() => {
@@ -239,63 +251,67 @@ export default async function ProductPage({ params }: { params: Promise<{ locale
   ]
 
   return (
-    <main className="min-h-screen pb-[100px]">
-      {/* Structured Data */}
-      <ProductStructuredData product={product} locale={locale} isAvailable={isProductAvailable} />
-      <BreadcrumbStructuredData items={breadcrumbItems} />
+    <>
+      <main className="min-h-screen pb-[100px]">
+        {/* Structured Data */}
+        <ProductStructuredData product={product} locale={locale} isAvailable={isProductAvailable} />
+        <BreadcrumbStructuredData items={breadcrumbItems} />
 
-      <BackButton />
+        <BackButton />
 
-      {/* Product Details */}
-      <section className="container mx-auto px-4 pb-24 lg:pb-12">
-        <div className="grid gap-8 lg:grid-cols-2">
-          {/* Product Images */}
-          <div>
-            <ProductGallery
-              images={product.images || []}
-              productName={product.name_uk || product.name_en}
-              isAvailable={isProductAvailable}
-            />
+        {/* Product Details */}
+        <section className="container mx-auto px-4 pb-24 lg:pb-12">
+          <div className="grid gap-8 lg:grid-cols-2">
+            {/* Product Images */}
+            <div>
+              <ProductGallery
+                images={product.images || []}
+                productName={product.name_uk || product.name_en}
+                isAvailable={isProductAvailable}
+              />
 
-            {/* Description - shown below gallery on desktop */}
-            <ProductDescription
-              descriptionUk={product.description_uk}
-              descriptionEn={product.description_en}
+              {/* Description - shown below gallery on desktop */}
+              <ProductDescription
+                descriptionUk={product.description_uk}
+                descriptionEn={product.description_en}
+              />
+            </div>
+
+            {/* Product Info */}
+            <ProductDetails
+              product={{
+                id: product.id,
+                name_uk: product.name_uk,
+                name_en: product.name_en,
+                slug: product.slug,
+                price: product.price,
+                compare_at_price: product.compare_at_price,
+                description_uk: product.description_uk,
+                description_en: product.description_en,
+                stock: product.stock,
+                is_in_stock: product.is_in_stock,
+                sku: product.sku,
+                images: product.images,
+              }}
+              productCharacteristics={productCharacteristics || []}
+              characteristicTypes={characteristicTypes || []}
+              characteristicOptions={characteristicOptions || []}
+              priceCombinations={priceCombinations || []}
+              additionalInfoBlock={additionalInfoBlock || null}
+              downloadableFiles={downloadableFiles}
             />
           </div>
+        </section>
 
-          {/* Product Info */}
-          <ProductDetails
-            product={{
-              id: product.id,
-              name_uk: product.name_uk,
-              name_en: product.name_en,
-              slug: product.slug,
-              price: product.price,
-              compare_at_price: product.compare_at_price,
-              description_uk: product.description_uk,
-              description_en: product.description_en,
-              stock: product.stock,
-              is_in_stock: product.is_in_stock,
-              sku: product.sku,
-              images: product.images,
-            }}
-            productCharacteristics={productCharacteristics || []}
-            characteristicTypes={characteristicTypes || []}
-            characteristicOptions={characteristicOptions || []}
-            priceCombinations={priceCombinations || []}
-            additionalInfoBlock={additionalInfoBlock || null}
-          />
-        </div>
-      </section>
-
-      <RelatedProductsSection
-        products={relatedProducts}
-        productCharacteristics={relatedProductCharacteristics || []}
-        characteristicTypes={relatedCharacteristicTypes || []}
-        characteristicOptions={relatedCharacteristicOptions || []}
-        priceCombinations={relatedPriceCombinations || []}
-      />
-    </main>
+        <RelatedProductsSection
+          products={relatedProducts}
+          productCharacteristics={relatedProductCharacteristics || []}
+          characteristicTypes={relatedCharacteristicTypes || []}
+          characteristicOptions={relatedCharacteristicOptions || []}
+          priceCombinations={relatedPriceCombinations || []}
+        />
+      </main>
+      <Footer />
+    </>
   )
 }

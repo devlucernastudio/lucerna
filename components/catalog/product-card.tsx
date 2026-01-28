@@ -10,12 +10,13 @@ import { useCart } from "@/lib/cart-context"
 import { showToast } from "@/lib/toast"
 import { useI18n } from "@/lib/i18n-context"
 import { getTranslation } from "@/lib/translations"
+import type { CharacteristicInputType } from "@/lib/types/characteristics"
 
 interface CharacteristicType {
   id: string
   name_uk: string
   name_en: string
-  input_type: string
+  input_type: CharacteristicInputType
   required: boolean
   affects_price: boolean
 }
@@ -145,11 +146,15 @@ export function ProductCard({
 
   return (
     <>
-      <Card className="flex flex-col py-0 overflow-hidden border-border/50 transition-shadow hover:shadow-lg">
-        <LocaleLink href={`/product/${product.slug}`}>
+      <LocaleLink href={`/product/${product.slug}`} className="block">
+        <Card className="flex flex-col py-0 btn-feedback overflow-hidden border-border/50 transition-shadow hover:shadow-lg cursor-pointer h-full">
           <div className="relative aspect-square overflow-hidden bg-muted">
             <Image
-              src={product.images?.[0] || "/placeholder.svg"}
+              src={(() => {
+                const firstImage = product.images?.[0]
+                if (!firstImage) return "/placeholder.svg"
+                return typeof firstImage === "string" ? firstImage : firstImage.url
+              })()}
               alt={productName || product.name_uk || product.name_en}
               fill
               sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
@@ -157,17 +162,12 @@ export function ProductCard({
               className={`object-cover transition-all ${!isProductAvailable ? "opacity-50 grayscale" : "hover:scale-105"}`}
             />
           </div>
-        </LocaleLink>
-        <CardContent className="flex flex-col flex-1 p-4">
-          <LocaleLink href={`/product/${product.slug}`}>
+          <CardContent className="flex flex-col flex-1 p-4">
             <h3 className="mb-2 text-base font-medium text-foreground hover:text-[#D4834F] transition-colors">
               {productName || product.name_uk || product.name_en}
             </h3>
-          </LocaleLink>
-          <LocaleLink href={`/product/${product.slug}`} className="flex flex-col flex-1">
             {(() => {
               const description = productDescription || product.description_uk || product.description_en || ""
-              // Strip HTML tags for display in card
               const stripHtml = (html: string) => {
                 if (!html) return ""
                 return html.replace(/<[^>]*>/g, "").trim()
@@ -190,17 +190,21 @@ export function ProductCard({
                 </p>
               )}
             </div>
-          </LocaleLink>
-          <Button
-            onClick={handleAddToCart}
-            disabled={!isProductAvailable}
-            className="w-full bg-[#D4834F] hover:bg-[#C17340] disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_1px_3px_0_#000000ad,0_1px_1px_-1px_#00000073]"
-            aria-label={locale === "uk" ? `Додати ${productName || product.name_uk || product.name_en} до кошика` : `Add ${productName || product.name_en || product.name_uk} to cart`}
-          >
-            {t("product.addToCart")}
-          </Button>
-        </CardContent>
-      </Card>
+            <Button
+              onClick={(e) => {
+                e.stopPropagation()
+                e.preventDefault()
+                handleAddToCart()
+              }}
+              disabled={!isProductAvailable}
+              className="w-full bg-[#D4834F] hover:bg-[#C17340] text-glow-white disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_1px_3px_0_#000000ad,0_1px_1px_-1px_#00000073]"
+              aria-label={locale === "uk" ? `Додати ${productName || product.name_uk || product.name_en} до кошика` : `Add ${productName || product.name_en || product.name_uk} to cart`}
+            >
+              {t("product.addToCart")}
+            </Button>
+          </CardContent>
+        </Card>
+      </LocaleLink>
 
       {mounted && hasCharacteristics && (
         <ProductCharacteristicsModal
@@ -212,10 +216,12 @@ export function ProductCard({
             name_en: product.name_en,
             slug: product.slug,
             price: product.price,
+            description_uk: product.description_uk,
+            description_en: product.description_en,
             images: product.images,
           }}
           productCharacteristics={productCharacteristics}
-          characteristicTypes={characteristicTypes}
+          characteristicTypes={characteristicTypes as any}
           characteristicOptions={characteristicOptions}
           priceCombinations={priceCombinations}
         />

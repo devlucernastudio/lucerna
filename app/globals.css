@@ -139,6 +139,14 @@
     width: max-content;
     box-shadow: 0 1px 3px 0 var(--tw-shadow-color, #0000001a), 0 1px 2px -1px var(--tw-shadow-color, #0000001a);
   }
+  .text-glow-orange {
+    text-shadow: 0px 0px 1px #D4834F;
+  }
+  .text-glow-white {
+    color: #ffffff;
+    text-shadow: 0px 1px 3px #3e3b3b;
+    font-weight: 600;
+  }
   .select-empty {
     color: #fd7900;
     border: 2px solid;
