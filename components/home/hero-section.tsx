@@ -98,8 +98,8 @@ export function HeroSection({ contentBlocks }: { contentBlocks: ContentBlock[] |
           opacity: Math.max(0, 1 - scrollY / opacityDivisor),
         }}
       >
-        <h1 className="text-balance font-serif text-[28px] text-4xl font-light tracking-wide text-white md:text-6xl">{title}</h1>
-        <p className="text-balance text-lg text-white/90 md:text-xl">{subtitle}</p>
+        <h1 className="text-balance text-shadow-[0_1px_3px_#3e3b3b] font-serif text-[28px] text-4xl font-light tracking-wide text-white md:text-6xl">{title}</h1>
+        <p className="text-balance text-shadow-[0_1px_3px_#3e3b3b] text-lg text-white/90 md:text-xl">{subtitle}</p>
         <Button 
           size="lg" 
           className="bg-[#D4834F] text-glow-white px-8 text-base hover:bg-[#C17340] shadow-[0_1px_3px_0_#000000ad,0_1px_1px_-1px_#00000073]" 

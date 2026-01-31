@@ -32,9 +32,11 @@ interface ProductGalleryProps {
   productName: string
   isAvailable?: boolean
   downloadableFiles?: DownloadableFile[]
+  /** Server-rendered LCP image (first slide); when present, first slide is not rendered as Image here to avoid duplicate request */
+  children?: React.ReactNode
 }
 
-export function ProductGallery({ images, productName, isAvailable = true, downloadableFiles = [] }: ProductGalleryProps) {
+export function ProductGallery({ images, productName, isAvailable = true, downloadableFiles = [], children: lcpImage }: ProductGalleryProps) {
   const { locale } = useI18n()
   const t = (key: string) => getTranslation(locale, key)
   // Normalize images array
@@ -117,10 +119,25 @@ export function ProductGallery({ images, productName, isAvailable = true, downlo
 
   return (
     <div className="space-y-4">
-      {/* Main Image */}
+      {/* Main Image: LCP (children) + overlay for slide 0 (empty) or slide 1+ (Image) */}
       <div className="relative aspect-square overflow-hidden rounded-lg bg-muted group">
+        {lcpImage}
+        {/* When mainImageIndex > 0: overlay Image above LCP */}
+        {mainImageIndex > 0 && (
+          <span className="pointer-events-none absolute inset-0 z-20 block overflow-hidden rounded-lg">
+            <Image
+              src={mainImage?.url || "/placeholder.svg"}
+              alt={`${productName} ${mainImageIndex + 1}`}
+              fill
+              sizes="(max-width: 768px) 100vw, 50vw"
+              quality={85}
+              className={`object-cover transition-opacity ${!isAvailable ? "opacity-50 grayscale" : ""}`}
+            />
+          </span>
+        )}
+
         <button
-          className="w-full h-full cursor-zoom-in"
+          className="absolute inset-0 z-30 w-full h-full cursor-zoom-in"
           onClick={() => {
             setLightboxIndex(mainImageIndex)
             setLightboxOpen(true)
@@ -128,16 +145,10 @@ export function ProductGallery({ images, productName, isAvailable = true, downlo
           onTouchStart={onTouchStart}
           onTouchMove={onTouchMove}
           onTouchEnd={onTouchEnd}
+          type="button"
+          aria-label={productName}
         >
-          <Image
-            src={mainImage?.url || "/placeholder.svg"}
-            alt={`${productName} ${mainImageIndex + 1}`}
-            fill
-            sizes="(max-width: 768px) 100vw, 50vw"
-            quality={85}
-            className={`object-cover transition-opacity ${!isAvailable ? "opacity-50 grayscale" : ""}`}
-            priority={mainImageIndex === 0}
-          />
+          <span className="sr-only">{productName}</span>
         </button>
 
         {/* Navigation Arrows */}
@@ -146,7 +157,7 @@ export function ProductGallery({ images, productName, isAvailable = true, downlo
             <Button
               variant="ghost"
               size="icon"
-              className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+              className="absolute left-2 top-1/2 z-40 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white opacity-0 group-hover:opacity-100 transition-opacity"
               onClick={(e) => {
                 e.stopPropagation()
                 handlePrev()
@@ -157,7 +168,7 @@ export function ProductGallery({ images, productName, isAvailable = true, downlo
             <Button
               variant="ghost"
               size="icon"
-              className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+              className="absolute right-2 top-1/2 z-40 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white opacity-0 group-hover:opacity-100 transition-opacity"
               onClick={(e) => {
                 e.stopPropagation()
                 handleNext()

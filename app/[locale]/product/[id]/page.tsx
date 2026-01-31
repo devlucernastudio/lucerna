@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { ProductGallery } from "@/components/product/product-gallery"
+import { ProductGalleryLCPImage } from "@/components/product/product-gallery-lcp-image"
 import { ProductDetails } from "@/components/product/product-details"
 import { BackButton } from "@/components/product/back-button"
 import { RelatedProductsSection } from "@/components/product/related-products-section"
@@ -269,7 +270,15 @@ export default async function ProductPage({ params }: { params: Promise<{ locale
                 productName={product.name_uk || product.name_en}
                 isAvailable={isProductAvailable}
                 downloadableFiles={downloadableFiles}
-              />
+              >
+                {product.images && product.images.length > 0 && (
+                  <ProductGalleryLCPImage
+                    firstImage={product.images[0]}
+                    productName={product.name_uk || product.name_en}
+                    isAvailable={isProductAvailable}
+                  />
+                )}
+              </ProductGallery>
 
               {/* Description - shown below gallery on desktop */}
               <ProductDescription
