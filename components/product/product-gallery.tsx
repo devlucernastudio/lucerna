@@ -2,21 +2,41 @@
 
 import { useState, useRef } from "react"
 import Image from "next/image"
-import { ChevronLeft, ChevronRight, X } from "lucide-react"
+import { ChevronLeft, ChevronRight, ChevronDown, Download, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
   DialogContent,
   DialogTitle,
 } from "@/components/ui/dialog"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { useI18n } from "@/lib/i18n-context"
+import { getTranslation } from "@/lib/translations"
+
+interface DownloadableFile {
+  id: string
+  title_uk: string
+  title_en: string
+  description_uk: string | null
+  description_en: string | null
+  link: string
+}
 
 interface ProductGalleryProps {
   images: Array<{ url: string; id?: string }> | string[]
   productName: string
   isAvailable?: boolean
+  downloadableFiles?: DownloadableFile[]
 }
 
-export function ProductGallery({ images, productName, isAvailable = true }: ProductGalleryProps) {
+export function ProductGallery({ images, productName, isAvailable = true, downloadableFiles = [] }: ProductGalleryProps) {
+  const { locale } = useI18n()
+  const t = (key: string) => getTranslation(locale, key)
   // Normalize images array
   const normalizedImages = images.map((img) =>
     typeof img === "string" ? { url: img } : img
@@ -210,6 +230,52 @@ export function ProductGallery({ images, productName, isAvailable = true }: Prod
             </>
           )}
         </div>
+      )}
+
+      {/* Downloadable Files */}
+      {downloadableFiles.length > 0 && (
+        <>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                className="w-full justify-between bg-[#D4834F] hover:bg-[#C17340] text-white border-[#D4834F]"
+              >
+                <div className="flex items-center text-glow-white gap-2">
+                  <Download className="h-4 w-4" />
+                  <span>{t("product.download3DModels")}</span>
+                </div>
+                <ChevronDown className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-[var(--radix-dropdown-menu-trigger-width)]">
+              {downloadableFiles.map((file) => (
+                <DropdownMenuItem
+                  key={file.id}
+                  asChild
+                  className="cursor-pointer"
+                >
+                  <a
+                    href={file.link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex flex-col items-start gap-1 py-2"
+                  >
+                    <span className="font-medium">
+                      {locale === "uk" ? file.title_uk : file.title_en}
+                    </span>
+                    {(file.description_uk || file.description_en) && (
+                      <span className="text-xs text-muted-foreground">
+                        {locale === "uk" ? file.description_uk : file.description_en}
+                      </span>
+                    )}
+                  </a>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <div className="border-b border-border md:hidden"></div>
+        </>
       )}
 
       {/* Lightbox */}

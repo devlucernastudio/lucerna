@@ -15,7 +15,7 @@ interface SocialMediaLink {
   is_enabled: boolean
 }
 
-export function Footer() {
+export function Footer({ footerRightsStyle }: { footerRightsStyle?: string }) {
   const { locale } = useI18n()
   const t = (key: string) => getTranslation(locale, key)
   const [contactSettings, setContactSettings] = useState<{
@@ -172,7 +172,7 @@ export function Footer() {
               )}
             </div>
           </div>
-          <div className="mt-8 border-t border-border pt-8 text-center text-sm text-muted-foreground">
+          <div className={`mt-8 border-t border-border pt-8 text-center text-sm text-muted-foreground ${footerRightsStyle || ""}`}>
             {t("footer.rights")}
           </div>
         </div>

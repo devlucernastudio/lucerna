@@ -252,7 +252,7 @@ export default async function ProductPage({ params }: { params: Promise<{ locale
 
   return (
     <>
-      <main className="min-h-screen pb-[100px]">
+      <main className="min-h-screen">
         {/* Structured Data */}
         <ProductStructuredData product={product} locale={locale} isAvailable={isProductAvailable} />
         <BreadcrumbStructuredData items={breadcrumbItems} />
@@ -260,7 +260,7 @@ export default async function ProductPage({ params }: { params: Promise<{ locale
         <BackButton />
 
         {/* Product Details */}
-        <section className="container mx-auto px-4 pb-24 lg:pb-12">
+        <section className="container mx-auto px-4 pb-12">
           <div className="grid gap-8 lg:grid-cols-2">
             {/* Product Images */}
             <div>
@@ -268,6 +268,7 @@ export default async function ProductPage({ params }: { params: Promise<{ locale
                 images={product.images || []}
                 productName={product.name_uk || product.name_en}
                 isAvailable={isProductAvailable}
+                downloadableFiles={downloadableFiles}
               />
 
               {/* Description - shown below gallery on desktop */}
@@ -298,7 +299,6 @@ export default async function ProductPage({ params }: { params: Promise<{ locale
               characteristicOptions={characteristicOptions || []}
               priceCombinations={priceCombinations || []}
               additionalInfoBlock={additionalInfoBlock || null}
-              downloadableFiles={downloadableFiles}
             />
           </div>
         </section>
@@ -311,7 +311,7 @@ export default async function ProductPage({ params }: { params: Promise<{ locale
           priceCombinations={relatedPriceCombinations || []}
         />
       </main>
-      <Footer />
+      <Footer footerRightsStyle="pb-[100px] md:pb-0" />
     </>
   )
 }
