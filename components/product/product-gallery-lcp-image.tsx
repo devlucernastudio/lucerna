@@ -27,6 +27,7 @@ export function ProductGalleryLCPImage({
         sizes="(max-width: 768px) 100vw, 50vw"
         quality={85}
         priority
+        fetchPriority="high"
         className={`object-cover transition-opacity ${!isAvailable ? "opacity-50 grayscale" : ""}`}
       />
     </span>
