@@ -11,55 +11,34 @@ export const revalidate = 60 // Cache for 60 seconds (ISR)
 export default async function HomePage({ params }: { params: Promise<{ locale: string }> }) {
   const supabase = await createClient()
 
-  // Fetch featured products from database
-  const { data: products } = await supabase
-    .from("products")
-    .select("*")
-    .eq("is_featured", true)
-    .eq("is_active", true)
-    .order("created_at", { ascending: false })
-    .limit(6)
+  // Single RPC: all home page data
+  const { data: pageData, error: rpcError } = await supabase.rpc("get_home_page_data")
 
-  // Fetch product characteristics for featured products
-  const productIds = products?.map((p) => p.id) || []
-  const { data: productCharacteristics } = productIds.length > 0
-    ? await supabase
-        .from("product_characteristics")
-        .select("*")
-        .in("product_id", productIds)
-    : { data: [] }
+  if (rpcError || pageData == null) {
+    return (
+      <main className="min-h-screen">
+        <HeroSection contentBlocks={[]} />
+        <CustomSection contentBlocks={[]} />
+        <FeaturedProducts
+          products={[]}
+          productCharacteristics={[]}
+          characteristicTypes={[]}
+          characteristicOptions={[]}
+          priceCombinations={[]}
+        />
+        <FeaturesSection contentBlocks={[]} />
+        <AboutSection contentBlocks={[]} />
+        <Footer />
+      </main>
+    )
+  }
 
-  // Fetch characteristic types
-  const characteristicTypeIds = productCharacteristics?.map((pc) => pc.characteristic_type_id) || []
-  const { data: characteristicTypes } = characteristicTypeIds.length > 0
-    ? await supabase
-        .from("characteristic_types")
-        .select("*")
-        .in("id", [...new Set(characteristicTypeIds)])
-    : { data: [] }
-
-  // Fetch characteristic options
-  const { data: characteristicOptions } = characteristicTypeIds.length > 0
-    ? await supabase
-        .from("characteristic_options")
-        .select("*")
-        .in("characteristic_type_id", [...new Set(characteristicTypeIds)])
-    : { data: [] }
-
-  // Fetch price combinations
-  const { data: priceCombinations } = productIds.length > 0
-    ? await supabase
-        .from("product_characteristic_price_combinations")
-        .select("*")
-        .in("product_id", productIds)
-    : { data: [] }
-
-  // Fetch content blocks
-  const { data: contentBlocks } = await supabase
-    .from("content_blocks")
-    .select("*")
-    .eq("is_active", true)
-    .order("position")
+  const products = (pageData.products ?? []) as any[]
+  const productCharacteristics = (pageData.product_characteristics ?? []) as any[]
+  const characteristicTypes = (pageData.characteristic_types ?? []) as any[]
+  const characteristicOptions = (pageData.characteristic_options ?? []) as any[]
+  const priceCombinations = (pageData.price_combinations ?? []) as any[]
+  const contentBlocks = (pageData.content_blocks ?? []) as any[]
 
   return (
     <main className="min-h-screen">
