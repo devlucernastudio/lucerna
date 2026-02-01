@@ -80,167 +80,30 @@ export default async function ProductPage({ params }: { params: Promise<{ locale
   const { locale, id } = await params
   const supabase = await createClient()
 
-  // Fetch product by slug
-  const { data: product } = await supabase
-    .from("products")
-    .select("*")
-    .eq("slug", id)
-    .eq("is_active", true)
-    .single()
+  // Single RPC: all product page data
+  const { data: pageData, error: rpcError } = await supabase.rpc("get_product_page_data", { p_slug: id })
 
-  if (!product) {
+  if (rpcError || pageData == null) {
     notFound()
   }
 
-  // Fetch product characteristics
-  const { data: productCharacteristics } = await supabase
-    .from("product_characteristics")
-    .select("*")
-    .eq("product_id", product.id)
+  const product = pageData.product as any
+  const productCharacteristics = (pageData.product_characteristics ?? []) as any[]
+  const characteristicTypes = (pageData.characteristic_types ?? []) as any[]
+  const characteristicOptions = (pageData.characteristic_options ?? []) as any[]
+  const priceCombinations = (pageData.price_combinations ?? []) as any[]
+  const additionalInfoBlock = pageData.additional_info_block as any
+  const downloadableFiles = (pageData.downloadable_files ?? []) as any[]
+  const relatedProducts = (pageData.related_products ?? []) as any[]
+  const relatedProductCharacteristics = (pageData.related_product_characteristics ?? []) as any[]
+  const relatedCharacteristicTypes = (pageData.related_characteristic_types ?? []) as any[]
+  const relatedCharacteristicOptions = (pageData.related_characteristic_options ?? []) as any[]
+  const relatedPriceCombinations = (pageData.related_price_combinations ?? []) as any[]
 
-  // Fetch characteristic types
-  const characteristicTypeIds = productCharacteristics?.map((pc) => pc.characteristic_type_id) || []
-  const { data: characteristicTypes } = characteristicTypeIds.length > 0
-    ? await supabase
-      .from("characteristic_types")
-      .select("*")
-      .in("id", characteristicTypeIds)
-      .order("position", { ascending: true })
-    : { data: [] }
-
-  // Fetch characteristic options
-  const { data: characteristicOptions } = characteristicTypeIds.length > 0
-    ? await supabase
-      .from("characteristic_options")
-      .select("*")
-      .in("characteristic_type_id", characteristicTypeIds)
-      .order("position", { ascending: true })
-    : { data: [] }
-
-  // Fetch price combinations
-  const { data: priceCombinations } = await supabase
-    .from("product_characteristic_price_combinations")
-    .select("*")
-    .eq("product_id", product.id)
-
-  // Fetch additional info block - check settings.enabled instead of is_active
-  const { data: additionalInfoBlockData, error: additionalInfoError } = await supabase
-    .from("content_blocks")
-    .select("*")
-    .eq("type", "additional_info")
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle()
-
-
-  // Pass block to component - let component check if enabled
-  const additionalInfoBlock = additionalInfoBlockData || null
-
-  // Fetch downloadable files for this product
-  const { data: productDownloadableFiles } = await supabase
-    .from("product_downloadable_files")
-    .select("*, downloadable_files(*)")
-    .eq("product_id", product.id)
-    .eq("show_file", true)
-
-  const downloadableFiles = productDownloadableFiles
-    ?.map((pdf: any) => pdf.downloadable_files)
-    .filter(Boolean) || []
-
-  // Check if product is available
-  const isProductAvailable = (() => {
-    // If there are price combinations, check if at least one is available
-    if (priceCombinations && priceCombinations.length > 0) {
-      return priceCombinations.some((pc: any) => pc.is_available)
-    }
-    // Otherwise, check is_in_stock
-    return product.is_in_stock ?? true
-  })()
-
-  // Fetch related products (from same categories)
-  const { data: productCategories } = await supabase
-    .from("product_categories")
-    .select("category_id")
-    .eq("product_id", product.id)
-
-  let relatedProducts: any[] = []
-  if (productCategories && productCategories.length > 0) {
-    const categoryIds = productCategories.map((pc) => pc.category_id)
-
-    // First get product IDs from same categories
-    const { data: relatedProductIds } = await supabase
-      .from("product_categories")
-      .select("product_id")
-      .in("category_id", categoryIds)
-      .neq("product_id", product.id)
-
-    if (relatedProductIds && relatedProductIds.length > 0) {
-      const productIds = [...new Set(relatedProductIds.map((r) => r.product_id))]
-      const { data } = await supabase
-        .from("products")
-        .select("*")
-        .eq("is_active", true)
-        .in("id", productIds)
-        .limit(3)
-      relatedProducts = data || []
-    }
-  }
-
-  // Fetch characteristics for related products
-  const relatedProductIds = relatedProducts.map((p) => p.id)
-  const { data: relatedProductCharacteristics } = relatedProductIds.length > 0
-    ? await supabase
-      .from("product_characteristics")
-      .select("*")
-      .in("product_id", relatedProductIds)
-    : { data: [] }
-
-  // Fetch characteristic types for related products
-  const relatedCharTypeIds = relatedProductCharacteristics?.map((pc) => pc.characteristic_type_id) || []
-  const { data: relatedCharacteristicTypes } = relatedCharTypeIds.length > 0
-    ? await supabase
-      .from("characteristic_types")
-      .select("*")
-      .in("id", [...new Set(relatedCharTypeIds)])
-    : { data: [] }
-
-  // Fetch characteristic options for related products
-  const { data: relatedCharacteristicOptions } = relatedCharTypeIds.length > 0
-    ? await supabase
-      .from("characteristic_options")
-      .select("*")
-      .in("characteristic_type_id", [...new Set(relatedCharTypeIds)])
-    : { data: [] }
-
-  // Fetch price combinations for related products
-  const { data: relatedPriceCombinations } = relatedProductIds.length > 0
-    ? await supabase
-      .from("product_characteristic_price_combinations")
-      .select("*")
-      .in("product_id", relatedProductIds)
-    : { data: [] }
-
-  // Group characteristics and price combinations by product_id
-  const relatedCharacteristicsByProduct: Record<string, any[]> = {}
-  const relatedPriceCombinationsByProduct: Record<string, any[]> = {}
-
-  if (relatedProductCharacteristics) {
-    relatedProductCharacteristics.forEach((pc) => {
-      if (!relatedCharacteristicsByProduct[pc.product_id]) {
-        relatedCharacteristicsByProduct[pc.product_id] = []
-      }
-      relatedCharacteristicsByProduct[pc.product_id].push(pc)
-    })
-  }
-
-  if (relatedPriceCombinations) {
-    relatedPriceCombinations.forEach((pc) => {
-      if (!relatedPriceCombinationsByProduct[pc.product_id]) {
-        relatedPriceCombinationsByProduct[pc.product_id] = []
-      }
-      relatedPriceCombinationsByProduct[pc.product_id].push(pc)
-    })
-  }
+  const isProductAvailable =
+    priceCombinations.length > 0
+      ? priceCombinations.some((pc: any) => pc.is_available)
+      : (product?.is_in_stock ?? true)
 
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lucerna-studio.com'
 
