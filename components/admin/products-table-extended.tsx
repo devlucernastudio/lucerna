@@ -341,6 +341,7 @@ export function ProductsTableExtended({
                       <Link href={`/admin/products/${product.id}/edit`} className="block">
                         <div className="relative h-10 w-10 md:h-12 md:w-12 overflow-hidden rounded cursor-pointer hover:opacity-80 transition-opacity">
                           <Image
+                            unoptimized
                             src={getMainImage(product)}
                             alt={product.name_uk}
                             fill

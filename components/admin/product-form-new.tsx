@@ -2653,7 +2653,7 @@ function SortableImageItem({
             <Star className="h-4 w-4 fill-current" />
           </div>
         )}
-        <Image src={url} alt={`Product ${index + 1}`} fill className="object-cover" />
+        <Image unoptimized src={url} alt={`Product ${index + 1}`} fill className="object-cover" />
         {isMain && (
           <div className="absolute inset-0 border-2 border-[#D4834F] rounded-md pointer-events-none" />
         )}

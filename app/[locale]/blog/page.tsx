@@ -79,6 +79,7 @@ export default async function BlogPage({ params }: { params: Promise<{ locale: s
                   <Link href={`/blog/${encodeURIComponent(post.slug)}`}>
                     <div className="relative aspect-video overflow-hidden bg-muted">
                       <Image
+                        unoptimized
                         src={post.cover_image || "/placeholder.svg"}
                         alt={post.title_uk || post.title_en}
                         fill

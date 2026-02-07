@@ -189,6 +189,7 @@ export function ProductsTable({
                 <div className="flex items-start gap-4">
                   <div className="relative h-20 w-20 flex-shrink-0 overflow-hidden rounded">
                     <Image
+                      unoptimized
                       src={product.images[0] || "/placeholder.svg"}
                       alt={product.name_uk}
                       fill
@@ -300,6 +301,7 @@ export function ProductsTable({
                   <td className="p-4">
                     <div className="relative h-12 w-12 overflow-hidden rounded">
                       <Image
+                        unoptimized
                         src={product.images[0] || "/placeholder.svg"}
                         alt={product.name_uk}
                         fill

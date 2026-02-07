@@ -82,6 +82,7 @@ export function CustomSection({ contentBlocks }: { contentBlocks: ContentBlock[]
                   <div className="relative group overflow-hidden rounded-md bg-muted/20 shadow-lg border border-border/50 sticky top-8 w-full">
                     <div className="relative aspect-[3/4] w-full">
                       <Image
+                        unoptimized
                         src={images[0]}
                         alt="Custom work main"
                         fill
@@ -202,6 +203,7 @@ export function CustomSection({ contentBlocks }: { contentBlocks: ContentBlock[]
                     >
                       <div className="relative aspect-[4/5] w-full">
                         <Image
+                          unoptimized
                           src={imageUrl}
                           alt={`Custom work ${index + 1}`}
                           fill
@@ -226,6 +228,7 @@ export function CustomSection({ contentBlocks }: { contentBlocks: ContentBlock[]
                       >
                         <div className="relative aspect-[4/5] w-full">
                           <Image
+                            unoptimized
                             src={imageUrl}
                             alt={`Custom work ${index + 2}`}
                             fill

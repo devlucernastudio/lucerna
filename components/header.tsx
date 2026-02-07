@@ -95,7 +95,7 @@ export function Header() {
           
         </div>
         <LocaleLink href="/" className="hidden md:flex ml-auto mr-auto items-center gap-2 scale-[1.8] btn-feedback">
-            <Image src="/logoLucerna.png" alt="Lucerna Studio logo" width={80} height={80} />
+            <Image unoptimized src="/logoLucerna.png" alt="Lucerna Studio logo" width={80} height={80} />
           </LocaleLink>
 
         {/* Mobile: Menu button on left */}
@@ -113,7 +113,7 @@ export function Header() {
         {/* Mobile: Logo centered */}
         <div className="md:hidden flex-1 flex justify-center btn-feedback">
           <LocaleLink href="/" className="flex items-center gap-2 scale-[1.8]">
-            <Image src="/logoLucerna.png" alt="Lucerna Studio" width={80} height={80} />
+            <Image unoptimized src="/logoLucerna.png" alt="Lucerna Studio" width={80} height={80} />
           </LocaleLink>
         </div>
 

@@ -159,6 +159,7 @@ export function ProductCard({
               fill
               sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
               quality={85}
+              unoptimized
               className={`object-cover transition-all ${!isProductAvailable ? "opacity-50 grayscale" : "hover:scale-105"}`}
             />
           </div>

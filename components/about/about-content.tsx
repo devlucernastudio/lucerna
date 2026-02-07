@@ -39,6 +39,7 @@ export function AboutContent({ titleUk, titleEn, contentUk, contentEn }: AboutCo
             <div>
               <div className="relative w-full overflow-hidden rounded-lg shadow-lg">
                 <Image
+                  unoptimized
                   src="/aboutUs.jpg"
                   alt={locale === "uk" ? "Lucerna Studio" : "Lucerna Studio"}
                   width={778}
@@ -103,6 +104,7 @@ export function AboutContent({ titleUk, titleEn, contentUk, contentEn }: AboutCo
                         <div className="my-6">
                           <div className="relative w-full overflow-hidden rounded-lg shadow-lg">
                             <Image
+                              unoptimized
                               src="/aboutUs.jpg"
                               alt={locale === "uk" ? "Lucerna Studio" : "Lucerna Studio"}
                               width={778}
@@ -144,6 +146,7 @@ export function AboutContent({ titleUk, titleEn, contentUk, contentEn }: AboutCo
                 <div className="my-6">
                   <div className="relative w-full overflow-hidden rounded-lg shadow-lg">
                     <Image
+                      unoptimized
                       src="/aboutUs.jpg"
                       alt={locale === "uk" ? "Lucerna Studio" : "Lucerna Studio"}
                       width={778}

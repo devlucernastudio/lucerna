@@ -64,6 +64,7 @@ export function Footer({ footerRightsStyle }: { footerRightsStyle?: string }) {
       <div className="border-b border-border">
         <div className="container mx-auto px-4 py-4 flex justify-center items-center">
           <Image
+            unoptimized
             src="/logoLucernaC.png"
             alt="Lucerna Studio"
             width={180}

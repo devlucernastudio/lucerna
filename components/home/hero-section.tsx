@@ -76,6 +76,7 @@ export function HeroSection({ contentBlocks }: { contentBlocks: ContentBlock[] |
     <section className="relative flex h-[600px] md:h-[900px] items-center justify-center overflow-hidden">
       <div className="absolute inset-0">
         <Image
+          unoptimized
           src="/mainImg.jpg"
           alt="Lucerna hero"
           fill

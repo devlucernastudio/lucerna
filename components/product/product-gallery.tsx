@@ -105,6 +105,7 @@ export function ProductGallery({ images, productName, isAvailable = true, downlo
     return (
       <div className="relative aspect-square overflow-hidden rounded-lg bg-muted">
         <Image
+          unoptimized
           src="/placeholder.svg"
           alt={productName}
           fill
@@ -126,6 +127,7 @@ export function ProductGallery({ images, productName, isAvailable = true, downlo
         {mainImageIndex > 0 && (
           <span className="pointer-events-none absolute inset-0 z-20 block overflow-hidden rounded-lg">
             <Image
+              unoptimized
               src={mainImage?.url || "/placeholder.svg"}
               alt={`${productName} ${mainImageIndex + 1}`}
               fill
@@ -195,6 +197,7 @@ export function ProductGallery({ images, productName, isAvailable = true, downlo
                 }`}
               >
                 <Image
+                  unoptimized
                   src={image.url || "/placeholder.svg"}
                   alt={`${productName} thumbnail ${index + 1}`}
                   fill
@@ -334,6 +337,7 @@ export function ProductGallery({ images, productName, isAvailable = true, downlo
             >
               <div className="relative w-full h-full max-w-full max-h-full flex items-center justify-center">
                 <Image
+                  unoptimized
                   src={normalizedImages[lightboxIndex]?.url || "/placeholder.svg"}
                   alt={`${productName} ${lightboxIndex + 1}`}
                   width={1200}

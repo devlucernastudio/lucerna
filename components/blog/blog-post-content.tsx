@@ -28,6 +28,7 @@ export function BlogPostContent({ post }: BlogPostContentProps) {
         {post.cover_image && (
           <div className="relative mb-8 aspect-video overflow-hidden rounded-lg bg-muted">
             <Image 
+              unoptimized
               src={post.cover_image} 
               alt={title} 
               fill 

@@ -696,6 +696,7 @@ function SortableImageItem({
           </div>
         )}
         <Image
+          unoptimized
           src={url}
           alt={`Custom work ${index + 1}`}
           fill

@@ -68,7 +68,7 @@ export default function CartPage() {
                       href={`/product/${item.slug || item.id}`}
                       className="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-md bg-muted"
                     >
-                      <Image src={item.image || "/placeholder.svg"} alt={item.name} fill className="object-cover" />
+                      <Image unoptimized src={item.image || "/placeholder.svg"} alt={item.name} fill className="object-cover" />
                     </LocaleLink>
 
                     <div className="flex-1 min-w-0">

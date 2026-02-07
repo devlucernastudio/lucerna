@@ -21,6 +21,7 @@ export function ProductGalleryLCPImage({
   return (
     <span className="absolute inset-0 z-10 block overflow-hidden rounded-lg">
       <Image
+        unoptimized
         src={src}
         alt={productName}
         fill
